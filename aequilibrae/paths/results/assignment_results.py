@@ -125,20 +125,10 @@ class AssignmentResults:
             # Combine each set of selected links into one large matrix that can be parsed into Cython
             # Each row corresponds a link set, and the equivalent rows in temp_sl_od_matrix and temp_sl_link_loading
             # Correspond to that set
-            self.select_links = np.full(
+            self.select_links = np.full(  # TODO FIXME: This needs to be made per thread, not entirely sure of its use yet
                 (len(self._selected_links), max([len(x) for x in self._selected_links.values()])),
                 -1,
                 dtype=graph.default_types("int"),
-            )
-            # 4d dimensions: link_set, origins, destinations, subclass
-            self.temp_sl_od_matrix = np.zeros(
-                (len(self._selected_links), graph.num_zones, graph.num_zones, self.classes["number"]),
-                dtype=graph.default_types("float"),
-            )
-            # 3d dimensions: link_set, link_id, subclass
-            self.temp_sl_link_loading = np.zeros(
-                (len(self._selected_links), graph.compact_num_links, self.classes["number"]),
-                dtype=graph.default_types("float"),
             )
 
             sl_idx = {}
@@ -150,11 +140,18 @@ class AssignmentResults:
                 # Multidimensional arrays where each row has different lengths
                 self.select_links[i][: len(arr)] = arr
                 # Correctly sets the dimensions for the final output matrices
-                self.select_link_od.matrix[name] = self.temp_sl_od_matrix[i]
-                self.select_link_loading[name] = self.temp_sl_link_loading[i]
+                self.select_link_od.matrix[name] = np.zeros(
+                    (graph.num_zones, graph.num_zones, self.classes["number"]),
+                    dtype=graph.default_types("float"),
+                )
+                self.select_link_loading[name] = np.zeros(
+                    (graph.compact_num_links, self.classes["number"]),
+                    dtype=graph.default_types("float"),
+                )
 
             # Overwrites previous arrays on assignment results level with the index to access that array in Cython
             self._selected_links = sl_idx
+
 
     def reset(self) -> None:
         """

@@ -14,6 +14,7 @@ include 'path_file_saving.pyx'
 include 'graph_building.pyx'
 
 def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
+    print("Entered one to all")
     # type: (int, AequilibraeMatrix, Graph, AssignmentResults, MultiThreadedAoN, int) -> int
     cdef long nodes, orig, block_flows_through_centroids, classes, b, origin_index, zones, links
     cdef int skims
@@ -96,13 +97,18 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
         long long[:, :] link_list
         bint select_link = False
 
-    if result._selected_links:
+    print("Setting up sl")
 
+    if result._selected_links:
         has_flow_mask = aux_result.has_flow_mask[curr_thread, :]
-        sl_od_matrix_view = aux_result.temp_sl_od_matrix[:, origin_index, :, :]
-        sl_link_loading_view = aux_result.temp_sl_link_loading[:, :, :]
-        link_list = aux_result.select_links[:, :]
+        sl_od_matrix_view = aux_result.temp_sl_od_matrix[curr_thread, :, origin_index, :, :]
+        print("got flow mask and od matrix view")
+        sl_link_loading_view = aux_result.temp_sl_link_loading[curr_thread, :, :, :]
+        print("got sl ll")
+        link_list = aux_result.select_links[curr_thread, :, :]
+        print("got sl ll view and ll")
         select_link = True
+    print("Set up sl")
     #Now we do all procedures with NO GIL
     with nogil:
         if block_flows_through_centroids: # Unblocks the centroid if that is the case
@@ -151,9 +157,13 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
         # which reduces the amount of repeated work we would do if they were separate
         # Note: 1 corresponds to select link analysis, 0 means no select link
         if select_link:
+            with gil:
+                print("Running sl")
             # Do SL and network loading at once
             sl_network_loading(link_list, demand_view, predecessors_view, conn_view, link_loads_view, sl_od_matrix_view,
                                sl_link_loading_view, has_flow_mask, classes)
+            with gil:
+                print("Finished sl")
         else:
             # do ONLY reular loading (via cascade assignment)
             network_loading(classes,
@@ -168,6 +178,8 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
 
     if result.save_path_file == True:
         save_path_file(origin_index, links, zones, predecessors_view, conn_view, path_file_base, path_index_file_base, write_feather)
+
+    print(aux_result.temp_sl_link_loading[curr_thread, :, :, :])
     return origin
 
 def path_computation(origin, destination, graph, results):

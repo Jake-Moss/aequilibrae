@@ -90,6 +90,7 @@ class allOrNothing(WorkerThread):
             all_threads["count"] += 1
 
         x = one_to_all(origin, self.matrix, self.graph, self.results, self.aux_res, th)
+
         self.cumulative += 1
         if x != origin:
             self.report.append(x)

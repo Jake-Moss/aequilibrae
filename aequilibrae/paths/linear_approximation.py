@@ -412,12 +412,12 @@ class LinearApproximation(WorkerThread):
                             # The temp has an index associated with the link_set name
                             copy_three_dimensions(
                                 c.results.select_link_od.matrix[name],  # matrix being written into
-                                c._aon_results.temp_sl_od_matrix[idx, :, :, :],  # results after the iteration
+                                np.sum(aon.aux_res.temp_sl_od_matrix, axis=0)[idx, :, :, :],  # results after the iteration
                                 self.cores,  # core count
                             )
                             copy_two_dimensions(
                                 c.results.select_link_loading[name],  # ouput matrix
-                                c._aon_results.temp_sl_link_loading[idx, :, :],  # matrix 1
+                                np.sum(aon.aux_res.temp_sl_link_loading, axis=0)[idx, :, :],  # matrix 1
                                 self.cores,  # core count
                             )
                     flows.append(c.results.total_link_loads)

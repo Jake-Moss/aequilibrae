@@ -38,8 +38,16 @@ class MultiThreadedAoN:
             self.has_flow_mask = np.zeros((results.cores, graph.compact_num_links), dtype=bool)
             # Copying the select link matrices from results
             self.select_links = results.select_links
-            self.temp_sl_od_matrix = results.temp_sl_od_matrix
-            self.temp_sl_link_loading = results.temp_sl_link_loading
+            # 4d dimensions: link_set, origins, destinations, subclass
+            self.temp_sl_od_matrix = np.zeros(
+                (results.cores, len(results._selected_links), graph.num_zones, graph.num_zones, results.classes["number"]),
+                dtype=graph.default_types("float"),
+            )
+            # 3d dimensions: link_set, link_id, subclass
+            self.temp_sl_link_loading = np.zeros(
+                (results.cores, len(results._selected_links), graph.compact_num_links, results.classes["number"]),
+                dtype=graph.default_types("float"),
+            )
 
         if results.num_skims > 0:
             self.temporary_skims = np.zeros((results.cores, results.compact_nodes, results.num_skims), dtype=ftype)
