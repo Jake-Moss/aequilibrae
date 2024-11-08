@@ -247,7 +247,7 @@ cdef class RouteChoiceSet:
             # interface.
             long long [:, :] _reached_first_matrix
 
-            unsigned char [:, :] destinations_matrix = np.zeros((c_cores, self.zones), dtype="bool")
+            unsigned char [:, :] destinations_matrix = np.zeros((c_cores, self.num_nodes), dtype="bool")
 
             # self.a_star = a_star
 
@@ -381,7 +381,7 @@ cdef class RouteChoiceSet:
             self.get_link_loading(cores=c_cores)
             self.get_sl_link_loading(cores=c_cores)
             self.get_sl_od_matrices()
-            
+
     @cython.boundscheck(False)
     @cython.wraparound(False)
     @cython.embedsignature(True)
