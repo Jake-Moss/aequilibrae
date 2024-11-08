@@ -19,6 +19,9 @@ class MultiThreadedPaths:
         self.reached_first = np.zeros((cores, nodes), dtype=itype)
         self.connectors = np.zeros((cores, nodes), dtype=itype)
         self.temp_b_nodes = np.zeros((cores, graph.compact_graph.b_node.values.shape[0]), dtype=itype)
+        self.destinations = np.zeros((cores, nodes), dtype=bool)
 
+        centroids_idx = graph.nodes_to_indices[graph.centroids]
         for i in range(cores):
             self.temp_b_nodes[i, :] = graph.compact_graph.b_node.values[:]
+            self.destinations[i, centroids_idx] = True

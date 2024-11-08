@@ -27,7 +27,7 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
     orig = origin
     origin_index = graph.compact_nodes_to_indices[orig]
 
-    #We transform the python variables in Cython variables
+    # We transform the python variables in Cython variables
     nodes = graph.compact_num_nodes
     links = graph.compact_num_links
 
@@ -45,7 +45,6 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
     cdef long long [:] graph_fs_view = graph.compact_fs
     cdef double [:] g_view = graph.compact_cost
     cdef long long [:] ids_graph_view = graph.compact_graph.id.values
-    cdef long long [:] all_nodes_view = graph.compact_all_nodes
     cdef long long [:] original_b_nodes_view = graph.compact_graph.b_node.values
 
     if skims > 0:
@@ -53,9 +52,9 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
         tskim = aux_result.temporary_skims[curr_thread, :, :]
         fskm = result.skims.matrix_view[origin_index, :, :]
     else:
-        gskim = np.zeros((1,1))
-        tskim = np.zeros((1,1))
-        fskm = np.zeros((1,1))
+        gskim = np.zeros((1, 1))
+        tskim = np.zeros((1, 1))
+        fskm = np.zeros((1, 1))
 
     cdef double [:, :] graph_skim_view = gskim
     cdef double [:, :] skim_matrix_view = tskim
@@ -101,8 +100,8 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
         link_list = aux_result.select_links[:, :]  # Read only, don't need to slice on curr_thread
         select_link = True
 
-    # Dummy destination set
-    cdef unsigned char [:] destinations = np.zeros(1, dtype=bool)
+    # Destination set
+    cdef unsigned char [:] destinations = aux_result.destinations[curr_thread, :]
 
     # Now we do all procedures with NO GIL
     with nogil:
@@ -117,7 +116,7 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
 
         w = path_finding(origin_index,
                          destinations,
-                         -1,  # destination index to disable early exit
+                         zones,  # destination index to disable early exit
                          g_view,
                          b_nodes_view,
                          graph_fs_view,
@@ -169,7 +168,7 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
                             node_load_view,
                             w)
 
-    if result.save_path_file == True:
+    if result.save_path_file:
         save_path_file(origin_index, links, zones, predecessors_view, conn_view, path_file_base, path_index_file_base, write_feather)
     return origin
 
@@ -317,7 +316,7 @@ def path_computation(origin, destination, graph, results):
             results.path_nodes = graph.all_nodes[np.asarray(all_nodes, graph.default_types('int'))][::-1]
             results.path_link_directions = np.asarray(link_directions, graph.default_types('int'))[::-1]
             mileposts.append(0)
-            results.milepost =  np.cumsum(mileposts[::-1])
+            results.milepost = np.cumsum(mileposts[::-1])
 
             del all_nodes
             del all_connectors
@@ -416,7 +415,6 @@ def skimming_single_origin(origin, graph, result, aux_result, curr_thread):
     if graph_fs[origin_index] == graph_fs[origin_index + 1]:
         raise ValueError("Centroid " + str(orig) + " does not exist in the graph")
 
-
     nodes = graph.compact_num_nodes + 1
     zones = graph.num_zones
     block_flows_through_centroids = graph.block_centroid_flows
@@ -440,13 +438,13 @@ def skimming_single_origin(origin, graph, result, aux_result, curr_thread):
     cdef long long [:] conn_view = aux_result.connectors[curr_thread, :]
     cdef long long [:] b_nodes_view = aux_result.temp_b_nodes[curr_thread, :]
     cdef double [:, :] skim_matrix_view = aux_result.temporary_skims[curr_thread, :, :]
-    
-    # Dummy destination set
-    cdef unsigned char [:] destinations = np.zeros(1, dtype=bool)
 
-    #Now we do all procedures with NO GIL
+    # Destination set
+    cdef unsigned char [:] destinations = aux_result.destinations[curr_thread, :]
+
+    # Now we do all procedures with NO GIL
     with nogil:
-        if block_flows_through_centroids: # Unblocks the centroid if that is the case
+        if block_flows_through_centroids:  # Unblocks the centroid if that is the case
             b = 0
             blocking_centroid_flows(b,
                                     origin_index,
@@ -456,7 +454,7 @@ def skimming_single_origin(origin, graph, result, aux_result, curr_thread):
                                     original_b_nodes_view)
         w = path_finding(origin_index,
                          destinations,
-                         -1,  # destination index to disable early exit
+                         zones,  # destination index to disable early exit
                          g_view,
                          b_nodes_view,
                          graph_fs_view,
@@ -467,7 +465,7 @@ def skimming_single_origin(origin, graph, result, aux_result, curr_thread):
 
         skim_multiple_fields(origin_index,
                              nodes,
-                             zones, # ???????????????
+                             zones,  # ???????????????
                              skims,
                              skim_matrix_view,
                              predecessors_view,
