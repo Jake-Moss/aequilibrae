@@ -247,7 +247,9 @@ cdef class RouteChoiceSet:
             # interface.
             long long [:, :] _reached_first_matrix
 
-        # self.a_star = a_star
+            unsigned char [:, :] destinations_matrix = np.zeros((c_cores, self.num_nodes), dtype="bool")
+
+            # self.a_star = a_star
 
         pa.set_io_thread_count(c_cores)
 
@@ -313,6 +315,7 @@ cdef class RouteChoiceSet:
                             conn_matrix[thread_id],
                             b_nodes_matrix[thread_id],
                             _reached_first_matrix[thread_id],
+                            destinations_matrix[thread_id],
                             penalty,
                             c_seed,
                         )
@@ -330,6 +333,7 @@ cdef class RouteChoiceSet:
                             conn_matrix[thread_id],
                             b_nodes_matrix[thread_id],
                             _reached_first_matrix[thread_id],
+                            destinations_matrix[thread_id],
                             penalty,
                             c_seed,
                         )
@@ -378,6 +382,9 @@ cdef class RouteChoiceSet:
             self.get_sl_link_loading(cores=c_cores)
             self.get_sl_od_matrices()
 
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    @cython.embedsignature(True)
     @cython.initializedcheck(False)
     cdef void path_find(
         RouteChoiceSet self,
@@ -387,7 +394,8 @@ cdef class RouteChoiceSet:
         long long [:] thread_predecessors,
         long long [:] thread_conn,
         long long [:] thread_b_nodes,
-        long long [:] _thread_reached_first
+        long long [:] _thread_reached_first,
+        unsigned char [:] thread_destinations
     ) noexcept nogil:
         """Small wrapper around path finding, thread locals should be passes as arguments."""
         if self.a_star:
@@ -406,9 +414,11 @@ cdef class RouteChoiceSet:
                 EQUIRECTANGULAR  # FIXME: enum import failing due to redefinition
             )
         else:
+            thread_destinations[dest_index] = True
             path_finding(
                 origin_index,
-                dest_index,
+                thread_destinations,
+                1,  # Single destination
                 thread_cost,
                 thread_b_nodes,
                 self.graph_fs_view,
@@ -417,6 +427,7 @@ cdef class RouteChoiceSet:
                 thread_conn,
                 _thread_reached_first
             )
+            thread_destinations[dest_index] = False
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
@@ -435,6 +446,7 @@ cdef class RouteChoiceSet:
         long long [:] thread_conn,
         long long [:] thread_b_nodes,
         long long [:] _thread_reached_first,
+        unsigned char [:] thread_destinations,
         double penalty,
         unsigned int seed
     ) noexcept nogil:
@@ -504,7 +516,8 @@ cdef class RouteChoiceSet:
                     thread_predecessors,
                     thread_conn,
                     thread_b_nodes,
-                    _thread_reached_first
+                    _thread_reached_first,
+                    thread_destinations
                 )
 
                 # Mark this set of banned links as seen
@@ -590,6 +603,7 @@ cdef class RouteChoiceSet:
         long long [:] thread_conn,
         long long [:] thread_b_nodes,
         long long [:] _thread_reached_first,
+        unsigned char [:] thread_destinations,
         double penalty,
         unsigned int seed
     ) noexcept nogil:
@@ -617,7 +631,8 @@ cdef class RouteChoiceSet:
                 thread_predecessors,
                 thread_conn,
                 thread_b_nodes,
-                _thread_reached_first
+                _thread_reached_first,
+                thread_destinations
             )
 
             if thread_predecessors[dest_index] >= 0:

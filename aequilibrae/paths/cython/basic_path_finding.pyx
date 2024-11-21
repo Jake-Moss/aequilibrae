@@ -15,9 +15,10 @@ from libc.stdlib cimport malloc, free
 
 include 'pq_4ary_heap.pyx'
 
+
 @cython.wraparound(False)
 @cython.embedsignature(True)
-@cython.boundscheck(False) # turn off bounds-checking for entire function
+@cython.boundscheck(False)  # turn off bounds-checking for entire function
 cpdef void network_loading(long classes,
                            double[:, :] demand,
                            long long [:] pred,
@@ -53,7 +54,7 @@ cpdef void network_loading(long classes,
             if not isnan(demand[i, j]):
                 node_load[i, j] = demand[i, j]
 
-    #Recursively cascades to the origin
+    # Recursively cascades to the origin
     for i in range(found, 0, -1):
         node = reached_first[i]
 
@@ -67,11 +68,12 @@ cpdef void network_loading(long classes,
             # Cascades the load from the node to their predecessor
             node_load[predecessor, j] += node_load[node, j]
 
+
 @cython.wraparound(False)
 @cython.embedsignature(True)
 @cython.boundscheck(False)
-cdef void _copy_skims(double[:,:] skim_matrix,  #Skim matrix_procedures computed from one origin to all nodes
-                      double[:,:] final_skim_matrix) noexcept nogil:  #Skim matrix_procedures computed for one origin to all other centroids only
+cdef void _copy_skims(double[:, :] skim_matrix,  # Skim matrix_procedures computed from one origin to all nodes
+                      double[:, :] final_skim_matrix) noexcept nogil:  # Skim matrix_procedures computed for one origin to all other centroids only
 
     cdef long i, j
     cdef long N = final_skim_matrix.shape[0]
@@ -79,12 +81,13 @@ cdef void _copy_skims(double[:,:] skim_matrix,  #Skim matrix_procedures computed
 
     for i in range(N):
         for j in range(skims):
-            final_skim_matrix[i,j]=skim_matrix[i,j]
+            final_skim_matrix[i, j]=skim_matrix[i, j]
 
 
 cdef int[:] return_an_int_view(input) noexcept nogil:
     cdef int [:] critical_links_view = input
     return critical_links_view
+
 
 @cython.wraparound(False)
 @cython.embedsignature(True)
@@ -98,27 +101,28 @@ cdef void sl_network_loading(
     double [:, :, :] sl_od_matrix,
     double [:, :, :] sl_link_loading,
     unsigned char [:] has_flow_mask,
-    long classes) noexcept nogil:
-# VARIABLES:
-#   selected_links: 2d memoryview. Each row corresponds to a set of selected links specified by the user
-#   demand:         The input demand matrix for a given origin. The first index corresponds to destination,
-#                   second is the class
-#   pred:           The list of predecessor nodes, i.e. given a node, referencing that node's index in pred
-#                   yields the previous node in the minimum spanning tree
-#   conn:           The list of links which connect predecessor nodes. referencing it by the predecessor yields
-#                   the link it used to connect the two nodes
-# link_loads:       Stores the loading on each link. Equivalent to link_loads in network_loading
-# temp_sl_od_matrix:     Stores the OD matrix for each set of selected links sliced for the given origin
-# The indices are:  set of links, destination, class
-# temp_sl_link_loading:  Stores the loading on the Selected links, and the paths which use the selected links
-#                   The indices are: set of links, link_id, class)
-# has_flow_mask:    An array which acts as a flag for which links were used in retracing a given OD path
-# classes:          the number of subclasses of vehicles for the given TrafficClass
-# 
-# Executes regular loading, while keeping track of SL links
+    long classes
+) noexcept nogil:
+    # VARIABLES:
+    #   selected_links: 2d memoryview. Each row corresponds to a set of selected links specified by the user
+    #   demand:         The input demand matrix for a given origin. The first index corresponds to destination,
+    #                   second is the class
+    #   pred:           The list of predecessor nodes, i.e. given a node, referencing that node's index in pred
+    #                   yields the previous node in the minimum spanning tree
+    #   conn:           The list of links which connect predecessor nodes. referencing it by the predecessor yields
+    #                   the link it used to connect the two nodes
+    # link_loads:       Stores the loading on each link. Equivalent to link_loads in network_loading
+    # temp_sl_od_matrix:     Stores the OD matrix for each set of selected links sliced for the given origin
+    # The indices are:  set of links, destination, class
+    # temp_sl_link_loading:  Stores the loading on the Selected links, and the paths which use the selected links
+    #                   The indices are: set of links, link_id, class)
+    # has_flow_mask:    An array which acts as a flag for which links were used in retracing a given OD path
+    # classes:          the number of subclasses of vehicles for the given TrafficClass
+    #
+    # Executes regular loading, while keeping track of SL links
     cdef:
         int i, j, k, l, dests = demand.shape[0], xshape = has_flow_mask.shape[0]
-        long long predecessor, connection, lid, link
+        long long predecessor, connection
         bint found
     for j in range(dests):
         memset(&has_flow_mask[0], 0, xshape * sizeof(unsigned char))
@@ -160,6 +164,7 @@ cdef void sl_network_loading(
                 connection = conn[predecessor]
                 predecessor = pred[predecessor]
 
+
 @cython.wraparound(False)
 @cython.embedsignature(True)
 @cython.boundscheck(False)
@@ -192,10 +197,10 @@ cdef void blocking_centroid_flows(int action,
                                   long long [:] real_b_nodes) noexcept nogil:
     cdef long long i
 
-    if action == 1: # We are unblocking
+    if action == 1:  # We are unblocking
         for i in range(fs[centroids]):
             temp_b_nodes[i] = real_b_nodes[i]
-    else: # We are blocking:
+    else:  # We are blocking:
         for i in range(fs[centroids]):
             temp_b_nodes[i] = orig
 
@@ -205,7 +210,7 @@ cdef void blocking_centroid_flows(int action,
 
 @cython.wraparound(False)
 @cython.embedsignature(True)
-@cython.boundscheck(False) # turn of bounds-checking for entire function
+@cython.boundscheck(False)  # turn of bounds-checking for entire function
 cdef void skim_single_path(long origin,
                            long nodes,
                            long skims,
@@ -240,7 +245,7 @@ cdef void skim_single_path(long origin,
 
 @cython.wraparound(False)
 @cython.embedsignature(True)
-@cython.boundscheck(False) # turn of bounds-checking for entire function
+@cython.boundscheck(False)  # turn of bounds-checking for entire function
 cpdef void skim_multiple_fields(long origin,
                                 long nodes,
                                 long zones,
@@ -251,7 +256,7 @@ cpdef void skim_multiple_fields(long origin,
                                 double[:, :] graph_costs,
                                 long long [:] reached_first,
                                 long found,
-                                double [:,:] final_skims) noexcept nogil:
+                                double [:, :] final_skims) noexcept nogil:
     cdef long long i, node, predecessor, connector, j
 
     # sets all skims to infinity
@@ -261,7 +266,7 @@ cpdef void skim_multiple_fields(long origin,
 
     # Zeroes the intrazonal cost
     for j in range(skims):
-            node_skims[origin, j] = 0
+        node_skims[origin, j] = 0
 
     # Cascade skimming
     for i in range(1, found + 1):
@@ -278,6 +283,7 @@ cpdef void skim_multiple_fields(long origin,
         for j in range(skims):
             final_skims[i, j] = node_skims[i, j]
 
+
 # ###########################################################################################################################
 #############################################################################################################################
 # Original Dijkstra implementation by François Pacull, taken from https://github.com/Edsger-dev/priority_queues
@@ -286,11 +292,13 @@ cpdef void skim_multiple_fields(long origin,
 #############################################################################################################################
 # ###########################################################################################################################
 
+
 @cython.wraparound(False)
 @cython.embedsignature(True)
-@cython.boundscheck(False) # turn of bounds-checking for entire function
+@cython.boundscheck(False)  # turn of bounds-checking for entire function
 cpdef int path_finding(long origin,
-                       long destination,
+                       unsigned char [:] destinations,
+                       long long destination_count,
                        double[:] graph_costs,
                        long long [:] csr_indices,
                        long long [:] graph_fs,
@@ -299,9 +307,11 @@ cpdef int path_finding(long origin,
                        long long [:] connectors,
                        long long [:] reached_first) noexcept nogil:
 
-    cdef unsigned int N = graph_costs.shape[0]
     cdef unsigned int M = pred.shape[0]
 
+    if destination_count == 0:
+        with gil:
+            raise ValueError("destination_count must be either -1 (for all destination), or > 0")
 
     cdef:
         size_t tail_vert_idx, head_vert_idx, idx  # indices
@@ -309,7 +319,6 @@ cpdef int path_finding(long origin,
         PriorityQueue pqueue  # binary heap
         ElementState vert_state  # vertex state
         size_t origin_vert = <size_t>origin
-        size_t destination_vert = <size_t>destination if destination != -1 else 0
         ITYPE_t found = 0
 
     for i in range(M):
@@ -331,7 +340,14 @@ cpdef int path_finding(long origin,
         reached_first[found] = tail_vert_idx
         found += 1
 
-        if destination != -1 and tail_vert_idx == destination_vert:
+        if destination_count < 0:
+            pass  # early exit is disabled
+        elif destination_count > 0 and destinations[tail_vert_idx]:
+            destinations[tail_vert_idx] = False
+            destination_count = destination_count - 1
+
+        # If we've just found the last destination, we can exit here. No need to explore any more edges
+        if destination_count == 0:
             # If we wish to reuse the tree we've constructed in update_path_trace we need to mark the un-scanned
             # nodes as unreachable. The nodes not in the heap (NOT_IN_HEAP) are already -1
             for idx in range(pqueue.length):
@@ -362,9 +378,10 @@ cpdef int path_finding(long origin,
     free_heap(&pqueue)
     return found - 1
 
+
 @cython.wraparound(False)
 @cython.embedsignature(True)
-@cython.boundscheck(False) # turn of bounds-checking for entire function
+@cython.boundscheck(False)  # turn of bounds-checking for entire function
 cpdef void dfs(long origin,
                long long [:] csr_indices,
                long long [:] graph_fs,
@@ -404,6 +421,7 @@ cdef enum Heuristic:
 
 HEURISTIC_MAP = {"haversine": HAVERSINE, "equirectangular": EQUIRECTANGULAR}
 
+
 @cython.wraparound(False)
 @cython.embedsignature(True)
 @cython.boundscheck(False)
@@ -433,7 +451,13 @@ cdef inline double haversine_heuristic(double lat1, double lon1, double lat2, do
 @cython.wraparound(False)
 @cython.embedsignature(True)
 @cython.boundscheck(False)
-cdef inline double equirectangular_heuristic(double lat1, double lon1, double lat2, double lon2, void* _data) noexcept nogil:
+cdef inline double equirectangular_heuristic(
+    double lat1,
+    double lon1,
+    double lat2,
+    double lon2,
+    void* _data
+) noexcept nogil:
     """
     A Equirectangular approximation heuristic, useful for small distances.
     Not admissible for large distances. A* may not return the optimal path with this heuristic.
@@ -441,9 +465,9 @@ cdef inline double equirectangular_heuristic(double lat1, double lon1, double la
     Arguments:
         **lat1** (:obj:`double`): Latitude of destination
         **lon1** (:obj:`double`): Longitude of destination
-        **lat2** (:obj:`double`): Latitude of node to evalutate
-        **lon2** (:obj:`double`): Longitude of node to evalutate
-        **data** (:obj:`void*`): Unused void pointer, for compatibilty with other heuristics
+        **lat2** (:obj:`double`): Latitude of node to evaluate
+        **lon2** (:obj:`double`): Longitude of node to evaluate
+        **data** (:obj:`void*`): Unused void pointer, for compatibility with other heuristics
 
     Returns the distance between (lat1, lon1) and (lat2, lon2).
 
@@ -459,17 +483,17 @@ cdef inline double equirectangular_heuristic(double lat1, double lon1, double la
 @cython.embedsignature(True)
 @cython.boundscheck(False)
 cpdef void path_finding_a_star(long origin,
-                              long destination,
-                              double[:] graph_costs,
-                              long long [:] csr_indices,
-                              long long [:] graph_fs,
-                              long long [:] nodes_to_indices,
-                              double [:] lats,
-                              double [:] lons,
-                              long long [:] pred,
-                              long long [:] ids,
-                              long long [:] connectors,
-                              Heuristic heuristic) noexcept nogil:
+                               long destination,
+                               double[:] graph_costs,
+                               long long [:] csr_indices,
+                               long long [:] graph_fs,
+                               long long [:] nodes_to_indices,
+                               double [:] lats,
+                               double [:] lons,
+                               long long [:] pred,
+                               long long [:] ids,
+                               long long [:] connectors,
+                               Heuristic heuristic) noexcept nogil:
     """
     Based on the pseudocode presented at https://en.wikipedia.org/wiki/A*_search_algorithm#Pseudocode
     The following variables have been renamed to be consistent with out Dijkstra's implementation
@@ -478,14 +502,12 @@ cpdef void path_finding_a_star(long origin,
      - fScore: pqueue.Elements[idx].key, for some idx
     """
 
-    cdef unsigned int N = graph_costs.shape[0]
     cdef unsigned int M = pred.shape[0]
 
     cdef:
-        size_t current, neighbour, idx # indices
-        DTYPE_t tail_vert_val, tentative_gScore  # vertex travel times
+        size_t current, neighbour, idx  # indices
+        DTYPE_t tentative_gScore  # vertex travel times
         PriorityQueue pqueue  # binary heap
-        ElementState vert_state  # vertex state
         size_t origin_vert = <size_t>origin
         size_t destination_vert = <size_t>destination if destination != -1 else 0
         double *gScore = <double *>malloc(M * sizeof(double))
@@ -504,7 +526,6 @@ cpdef void path_finding_a_star(long origin,
     else:  # heuristic == EQUIRECTANGULAR:
         heur = equirectangular_heuristic
         data = <void*>NULL
-
 
     for i in range(M):
         pred[i] = -1
@@ -544,7 +565,6 @@ cpdef void path_finding_a_star(long origin,
                     insert(&pqueue, neighbour, tentative_gScore + h)
                 else:
                     decrease_key(&pqueue, neighbour, tentative_gScore + h)
-
 
     free_heap(&pqueue)
     free(gScore)
