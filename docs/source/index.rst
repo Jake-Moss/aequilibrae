@@ -1,21 +1,22 @@
-.. AequilibraE documentation master file, created by
-   sphinx-quickstart on Fri Jul  6 17:02:38 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+:html_theme.sidebar_secondary.remove:
 
-===========
-AequilibraE
-===========
+.. raw:: html
 
-AequilibraE is the first comprehensive Python package for transportation modeling, and it aims to provide all the 
-resources not easily available from other open-source packages in the Python (NumPy, really) ecosystem.
+    <style type="text/css">
+         .bd-main .bd-content .bd-article-container {max-width: 80%;}
+    </style>
 
-**Download documentation**: :download:`HTML <_static/AequilibraE.zip>` | :download:`PDF <_static/latex/AequilibraE.pdf>`
+Python
+======
 
-**Previous versions**: documentation for AequilibraE's versions before 0.9.0 are available :ref:`here <versionhistory>`.
+**Download documentation**: :download:`HTML <_static/AequilibraE.zip>` | :download:`PDF <_static/latex/aequilibrae.pdf>`
+
+**Previous versions**: documentation for all AequilibraE's versions are available :ref:`here <versionhistory>`.
 
 **Useful links**: :ref:`installation` | :ref:`validation` | :ref:`developing_aequilibrae` | :ref:`support` | 
 :ref:`history_of_aequilibrae`
+
+|
 
 .. grid::
 
@@ -38,18 +39,18 @@ resources not easily available from other open-source packages in the Python (Nu
 
 .. grid::
     
-    .. grid-item-card:: :material-outlined:`build;1.5em` API References
-        :link: api_reference
-        :link-type: ref
-        :text-align: center
-        
-        Reference guide to AequilibraE's API.
+   .. grid-item-card:: :material-outlined:`build;1.5em` API References
+      :link: api_reference
+      :link-type: ref
+      :text-align: center
+      
+      Reference guide to AequilibraE's API.
 
-    .. grid-item-card:: :material-outlined:`person;1.5em` Not a programmer?
-        :link: https://www.aequilibrae.com/qgis/latest/
-        :text-align: center
-        
-        Take me to the GUI!
+   .. grid-item-card:: :material-outlined:`person;1.5em` Not a programmer?
+      :link: https://www.aequilibrae.com/latest/qgis/index.html
+      :text-align: center
+      
+      Take me to the GUI!
 
 .. toctree::
    :hidden:
@@ -57,4 +58,4 @@ resources not easily available from other open-source packages in the Python (Nu
 
    _auto_examples/index
    modeling_with_aequilibrae/index
-   api/api
+   api

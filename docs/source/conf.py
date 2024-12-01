@@ -68,7 +68,6 @@ extensions = [
     "sphinx_tabs.tabs",
 ]
 
-# sphinx_tabs_valid_builders = ['linkcheck']
 sphinx_tabs_disable_tab_closing = True
 
 # Change plot_gallery to True to start building examples again
@@ -88,11 +87,11 @@ sphinx_gallery_conf = {
             "examples/other_applications",
         ]
     ),
-    # "plot_gallery": "False",
+    "plot_gallery": True,
 }
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ["_static"]
+templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 source_suffix = ".rst"
@@ -120,33 +119,35 @@ highlight_language = "python3"
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
 html_theme = "pydata_sphinx_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
 html_css_files = ["custom.css"]
 
 html_theme_options = {
     "show_nav_level": 0,
-    "navbar_center": ["navbar-nav"],
-    "navbar_end": ["theme-switcher", "navbar-icon-links", "version-switcher"],
+    "navbar_center": ["navigation_header"],
     "navbar_start": ["navbar-logo"],
+    "navbar_end": ["theme-switcher", "navbar-icon-links"],
+    "navbar_persistent": ["search-button"],
     "navbar_align": "left",
-    "switcher": {
-        "json_url": "https://www.aequilibrae.com/python/latest/_static/switcher.json",
-        "version_match": version,
-    },
-    # "check_switcher": False,
     "github_url": "https://github.com/AequilibraE/aequilibrae",
     "analytics": {
         "google_analytics_id": "G-0HRKZDXRZ7",
     },
+    "logo": {
+        "text": "AequilibraE",
+        "image_light": "_static/large_icon.png",
+        "image_dark": "_static/large_icon.png",
+        "link": "https://www.aequilibrae.com/latest/home.html",
+    },
 }
 
-# The name for this set of Sphinx documents.  If None, it defaults to
+# The name for this set of Sphinx documents. If None, it defaults to
 html_title = f"AequilibraE {version}"
 
 # -- Options for HTMLHelp output ---------------------------------------------
@@ -158,9 +159,8 @@ htmlhelp_basename = "AequilibraEdoc"
 # latex_elements = {}
 
 # Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title,
-#  author, documentclass [howto, manual, or own class]).
-latex_documents = [(master_doc, "AequilibraE.tex", "AequilibraE Documentation", author, "manual")]
+# (source start file, target name, title, author, documentclass [howto, manual, or own class]).
+latex_documents = [("_latex/index", "aequilibrae.tex", html_title, author, "manual")]
 
 latex_appendices = [
     "useful_information/installation",
@@ -172,7 +172,7 @@ latex_appendices = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "aequilibrae", "AequilibraE Documentation", [author], 1)]
+man_pages = [(master_doc, "aequilibrae", html_title, [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------------
 
