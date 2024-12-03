@@ -52,6 +52,16 @@ jobs:
         python -m pytest --doctest-glob=*.rst docs/source/modeling_with_aequilibrae/project_pieces
         python -m pytest --doctest-glob=*.rst docs/source/modeling_with_aequilibrae/static_traffic_assignment
 
+    - name: Prepare links for DEV
+      if: ${{ (github.event_name == 'pull_request') && (env.HAS_SECRETS == 'true') }}
+      run: |
+        python -c "from docs.replace_regex import replace_regex; replace_regex(f'dev/{${{ github.event.number }}}')"
+
+    - name: Prepare links for DEVELOP
+      if: ${{ (github.ref == 'refs/heads/develop') && (github.event_name == 'push')}}
+      run: |
+        python -c "from ci.replace_regex import replace_regex; replace_regex('develop')"
+
     - name: Build documentation
       run: |
         jupyter nbconvert --to rst docs/source/useful_information/validation_benchmarking/IPF_benchmark.ipynb
