@@ -66,27 +66,35 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_git",
     "sphinx_tabs.tabs",
+    "sphinx_subfigure",
 ]
 
 sphinx_tabs_disable_tab_closing = True
 
 # Change plot_gallery to True to start building examples again
 sphinx_gallery_conf = {
-    "examples_dirs": ["examples"],  # path to your example scripts
-    "gallery_dirs": ["_auto_examples"],  # path to where to save gallery generated output
+    "examples_dirs": [
+        "aequilibrae_project/examples",
+        "distribution_procedures/examples",
+        "network_manipulation/examples",
+        "path_computation/examples",
+        "other_applications/examples",
+        "public_transport/examples",
+        "route_choice/examples",
+        "traffic_assignment/examples",
+    ],  # path to your example scripts
+    "gallery_dirs": [
+        "aequilibrae_project/_auto_examples",
+        "distribution_procedures/_auto_examples",
+        "network_manipulation/_auto_examples",
+        "path_computation/_auto_examples",
+        "other_applications/_auto_examples",
+        "public_transport/_auto_examples",
+        "route_choice/_auto_examples",
+        "traffic_assignment/_auto_examples",
+    ],  # path to where to save gallery generated output
     "capture_repr": ("_repr_html_", "__repr__"),
     "remove_config_comments": True,
-    "subsection_order": ExplicitOrder(
-        [
-            "examples/creating_models",
-            "examples/editing_networks",
-            "examples/skimming",
-            "examples/assignment_workflows",
-            "examples/aequilibrae_without_a_model",
-            "examples/visualization",
-            "examples/other_applications",
-        ]
-    ),
     "plot_gallery": True,
 }
 
@@ -129,7 +137,7 @@ html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 
 html_theme_options = {
-    "show_nav_level": 0,
+    "show_nav_level": 1,
     "navbar_center": ["navigation_header"],
     "navbar_start": ["navbar-logo"],
     "navbar_end": ["theme-switcher", "navbar-icon-links"],
@@ -162,11 +170,9 @@ htmlhelp_basename = "AequilibraEdoc"
 # (source start file, target name, title, author, documentclass [howto, manual, or own class]).
 latex_documents = [("_latex/index", "aequilibrae.tex", html_title, author, "manual")]
 
-latex_appendices = [
-    "useful_information/installation",
-    "useful_information/validation_benchmarking/ipf_performance",
-    "useful_information/validation_benchmarking/traffic_assignment",
-]
+# latex_appendices = []
+
+latex_engine = "xelatex"
 
 # -- Options for manual page output ------------------------------------------
 
