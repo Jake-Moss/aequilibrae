@@ -73,23 +73,34 @@ cdef void _coo_tocsc_uint32(
         size_t n_edge = <size_t>Bi.shape[0]
         cnp.uint32_t temp, cumsum, last
 
+    # count of each head vertex across all edges
     for i in range(n_edge):
         Bp[<size_t>Aj[i]] += 1
+
+
+    # replace values for each head vertex for the cumulative
+    # sum of the count, first iteration the value is replaced by 0,
+    
+    # then on next iteration the value is replaced by the count
+    # of the first vertex,
+    # on the next iteration the value is replaced by the sum
+    # of the count of the first and second vertex....
 
     cumsum = 0
     for i in range(n_vert):
         temp = Bp[i]
         Bp[i] = cumsum
         cumsum += temp
-    Bp[<size_t>n_vert] = <cnp.uint32_t>n_edge 
+    Bp[<size_t>n_vert] = <cnp.uint32_t>n_edge #n_edge should be the final cumsum value?
 
     for i in range(n_edge):
-        col  = <size_t>Aj[i]
-        dest = <size_t>Bp[col]
-        Bi[dest] = Ai[i]
-        Bx[dest] = Ax[i]
-        Bp[col] += 1
+        col  = <size_t>Aj[i] # head vertex
+        dest = <size_t>Bp[col] # cumsum at head vertex
+        Bi[dest] = Ai[i] # tail vertex
+        Bx[dest] = Ax[i] # edge data (edge index)
+        Bp[col] += 1 # add 1 to the cumsum at head vertex
 
+    # shift values, start at 0
     last = 0
     for i in range(n_vert + 1):
         temp = Bp[i]
@@ -180,22 +191,26 @@ cpdef convert_graph_to_csc_uint32(edges, tail, head, data, vertex_count) noexcep
 @cython.wraparound(False)
 @cython.embedsignature(False)
 @cython.initializedcheck(False)
-cdef cnp.float64_t *compute_SF_in_parallel(
-    cnp.uint32_t[::1] indptr_view,
-    cnp.uint32_t[::1] edge_idx_view,
+# cdef cnp.float64_t *compute_SF_in_parallel(...)
+cdef void compute_SF_in_parallel(
+    cnp.uint32_t[::1] indptr_view, # column pointer csc format
+    cnp.uint32_t[::1] edge_idx_view, 
     cnp.float64_t[::1] trav_time_view,
     cnp.float64_t[::1] freq_view,
     cnp.uint32_t[::1] tail_view,
     cnp.uint32_t[::1] head_view,
-    cnp.uint32_t[:] d_vert_ids_view,
-    cnp.uint32_t[:] destination_vertex_indices_view,
-    cnp.uint32_t[::1] o_vert_ids_view,
-    cnp.float64_t[::1] demand_vls_view,
+    cnp.uint32_t[:] d_vert_ids_view, # destination vertices
+    cnp.uint32_t[:] destination_vertex_indices_view, # in public_transport.run case, same as d_vert_ids_view
+    cnp.uint32_t[::1] o_vert_ids_view, # origin vertices
+    cnp.float64_t[::1] demand_vls_view, # volume
     cnp.float64_t[::1] edge_volume_view,
     bint output_travel_time,
     size_t vertex_count,
     size_t edge_count,
     int num_threads,
+    cnp.float64_t[::1] skim_col_view,
+    cnp.float64_t[::1] u_i_vec_view,
+    cnp.float64_t[::1] skim_i_vec_view,
 ) noexcept nogil:
     # Thread local variables are prefixed by "thread", anything else should be considered shared and thus read only
     if output_travel_time:
@@ -213,33 +228,46 @@ cdef cnp.float64_t *compute_SF_in_parallel(
         cnp.float64_t *thread_v_i_vec
         cnp.uint8_t *thread_h_a_vec
         cnp.uint32_t *thread_edge_indices
+        cnp.float64_t *thread_skim_i_vec
 
         # This is a shared buffer, all threads will write into separate slices depending on their threadid.
         # When writing all threads must increment!
         cnp.float64_t *edge_volume = <cnp.float64_t *> calloc(num_threads, sizeof(cnp.float64_t) * edge_count)
 
         # We malloc this memory here, then use it as the 0th thread's thread_u_i_vec to allow us to return it
-        cnp.float64_t *u_i_vec_out = <cnp.float64_t *> malloc(sizeof(cnp.float64_t) * vertex_count)
+        cnp.float64_t *u_i_vec_out = <cnp.float64_t *> malloc(num_threads * sizeof(cnp.float64_t) * vertex_count)
+        
+        cnp.float64_t *skim_i_vec_out = <cnp.float64_t *> malloc(num_threads * sizeof(cnp.float64_t) * vertex_count)
 
         int i  # openmp on windows requires iterator variable have signed type
         size_t j, destination_vertex_index
+        size_t k
 
     with parallel(num_threads=num_threads):
         thread_demand_origins = <cnp.uint32_t  *> malloc(sizeof(cnp.uint32_t)  * d_vert_ids_view.shape[0])
         thread_demand_values  = <cnp.float64_t *> malloc(sizeof(cnp.float64_t) * d_vert_ids_view.shape[0])
         # Here we take out thread local slice of the shared buffer, each thread is assigned a unique id so
         # we can safely read and write without collisions.
-        thread_edge_volume    = &edge_volume[threadid() * edge_count]
+        thread_edge_volume  = &edge_volume[threadid() * edge_count]
+        thread_u_i_vec = &u_i_vec_out[threadid() * vertex_count]
+        thread_skim_i_vec = &skim_i_vec_out[threadid() * vertex_count]
 
-        if output_travel_time and threadid() == 0:
-            thread_u_i_vec  = u_i_vec_out
-        else:
-            thread_u_i_vec  = <cnp.float64_t *> malloc(sizeof(cnp.float64_t) * vertex_count)
+        # if output_travel_time and threadid() == 0:
+        #     thread_u_i_vec  = u_i_vec_out
+        #     ### skim_col ###
+        #     thread_skim_i_vec  = skim_i_vec_out 
+        # else:
+        #     thread_u_i_vec  = <cnp.float64_t *> malloc(sizeof(cnp.float64_t) * vertex_count)
+        #     ### skim_col ###
+        #     thread_skim_i_vec  = <cnp.float64_t *> malloc(sizeof(cnp.float64_t) * vertex_count)
+
         thread_f_i_vec      = <cnp.float64_t *> malloc(sizeof(cnp.float64_t) * vertex_count)
         thread_u_j_c_a_vec  = <cnp.float64_t *> malloc(sizeof(cnp.float64_t) * edge_count)
         thread_v_i_vec      = <cnp.float64_t *> malloc(sizeof(cnp.float64_t) * vertex_count)
         thread_h_a_vec      = <cnp.uint8_t   *> malloc(sizeof(cnp.uint8_t)   * edge_count)
         thread_edge_indices = <cnp.uint32_t  *> malloc(sizeof(cnp.uint32_t)  * edge_count)
+
+        thread_skim_j_vec = <cnp.float64_t *> malloc(sizeof(cnp.float64_t) * edge_count)
 
         for i in prange(destination_vertex_indices_view.shape[0]):
             destination_vertex_index = destination_vertex_indices_view[i]
@@ -270,15 +298,24 @@ cdef cnp.float64_t *compute_SF_in_parallel(
                 thread_h_a_vec,
                 thread_edge_indices,
                 vertex_count,
-                destination_vertex_index
+                destination_vertex_index,
+                skim_col_view,
+                thread_skim_i_vec,
+                thread_skim_j_vec,
             )
 
         free(thread_demand_origins)
         free(thread_demand_values)
-        if output_travel_time and threadid() == 0:
-            pass
-        else:
-            free(thread_u_i_vec)
+
+        # if output_travel_time and threadid() == 0:
+        #     pass
+        # else:
+        #     free(thread_u_i_vec)
+        #     free(thread_skim_i_vec)
+
+        free(thread_u_i_vec)
+        free(thread_skim_i_vec)
+
         free(thread_f_i_vec)
         free(thread_u_j_c_a_vec)
         free(thread_v_i_vec)
@@ -291,8 +328,15 @@ cdef cnp.float64_t *compute_SF_in_parallel(
         for j in range(edge_count):
             edge_volume_view[j] += edge_volume[i * edge_count + j]
 
+        for k in range(vertex_count):
+            u_i_vec_view[k] += u_i_vec_out[i * vertex_count + k]
+            skim_i_vec_view[k] += skim_i_vec_out[i * vertex_count + k]
+
+    free(u_i_vec_out)
+    free(skim_i_vec_out)        
     free(edge_volume)
-    return u_i_vec_out
+    
+    #return u_i_vec_out
 
 
 @cython.boundscheck(False)
@@ -302,22 +346,25 @@ cdef cnp.float64_t *compute_SF_in_parallel(
 cdef void compute_SF_in(
     cnp.uint32_t[::1] csc_indptr,
     cnp.uint32_t[::1] csc_edge_idx,
-    cnp.float64_t[::1] c_a_vec,
-    cnp.float64_t[::1] f_a_vec,
+    cnp.float64_t[::1] c_a_vec, # travel time
+    cnp.float64_t[::1] f_a_vec, # freq
     cnp.uint32_t[::1] tail_indices,
     cnp.uint32_t[::1] head_indices,
-    cnp.uint32_t *demand_indices,
-    cnp.float64_t *demand_values,
+    cnp.uint32_t *demand_indices, # for each thread
+    cnp.float64_t *demand_values, # for each thread
     size_t demand_size,
-    cnp.float64_t *v_a_vec,
-    cnp.float64_t *u_i_vec,
-    cnp.float64_t *f_i_vec,
-    cnp.float64_t *u_j_c_a_vec,
-    cnp.float64_t *v_i_vec,
-    cnp.uint8_t *h_a_vec,
+    cnp.float64_t *v_a_vec, # for each thread
+    cnp.float64_t *u_i_vec, # for each thread
+    cnp.float64_t *f_i_vec, # for each thread
+    cnp.float64_t *u_j_c_a_vec, # for each thread
+    cnp.float64_t *v_i_vec, # for each thread
+    cnp.uint8_t *h_a_vec, # for each thread
     cnp.uint32_t *edge_indices,
     size_t vertex_count,
     int dest_vert_index,
+    cnp.float64_t[::1] skim_col_vec,
+    cnp.float64_t *skim_i_vec, # for each thread
+    cnp.float64_t *skim_j_vec, # for each thread
 ) noexcept nogil:
 
     cdef:
@@ -331,12 +378,16 @@ cdef void compute_SF_in(
         u_i_vec[i] = DATATYPE_INF
         f_i_vec[i] = 0.0
         v_i_vec[i] = 0.0
+        skim_i_vec[i] = 0.0
     u_i_vec[<size_t>dest_vert_index] = 0.0
 
     for i in range(edge_count):
         # v_a_vec[i] = 0.0
         u_j_c_a_vec[i] = DATATYPE_INF
         h_a_vec[i] = 0
+        skim_j_vec[i] = 0.0
+
+
 
 
     # first pass #
@@ -344,14 +395,17 @@ cdef void compute_SF_in(
     _SF_in_first_pass_full(
         csc_indptr,
         csc_edge_idx,
-        c_a_vec,
-        f_a_vec,
-        tail_indices,
-        u_i_vec,
-        f_i_vec,
-        u_j_c_a_vec,
-        h_a_vec,
-        dest_vert_index
+        c_a_vec, # travel time
+        f_a_vec, # freq
+        tail_indices, 
+        u_i_vec, # for each thread
+        f_i_vec, # for each thread
+        u_j_c_a_vec, # for each thread
+        h_a_vec, # for each thread
+        dest_vert_index,
+        skim_col_vec,
+        skim_i_vec, # for each thread
+        skim_j_vec # for each thread
     )
 
     # second pass #
@@ -412,14 +466,17 @@ cdef void compute_SF_in(
 cdef void _SF_in_first_pass_full(
     cnp.uint32_t[::1] csc_indptr, 
     cnp.uint32_t[::1] csc_edge_idx,
-    cnp.float64_t[::1] c_a_vec,
-    cnp.float64_t[::1] f_a_vec,
+    cnp.float64_t[::1] c_a_vec, # travel time
+    cnp.float64_t[::1] f_a_vec, # freq
     cnp.uint32_t[::1] tail_indices,
-    cnp.float64_t *u_i_vec,
-    cnp.float64_t *f_i_vec,
-    cnp.float64_t *u_j_c_a_vec,
-    cnp.uint8_t *h_a_vec,
+    cnp.float64_t *u_i_vec, # for each thread
+    cnp.float64_t *f_i_vec, # for each thread
+    cnp.float64_t *u_j_c_a_vec, # for each thread
+    cnp.uint8_t *h_a_vec, # for each thread
     int dest_vert_index,
+    cnp.float64_t[::1] skim_col_vec,
+    cnp.float64_t *skim_i_vec,
+    cnp.float64_t *skim_j_vec,
 ) noexcept nogil:
     """All vertices are visited."""
 
@@ -429,6 +486,7 @@ cdef void _SF_in_first_pass_full(
         ElementState edge_state
         size_t i, edge_idx, tail_vert_idx
         DATATYPE_t u_j_c_a, u_i, f_i, beta, u_i_new, f_a
+        DATATYPE_t skim_i, skim_j, skim_i_new, beta_skim
 
     # initialization of the heap elements 
     # all nodes have INFINITY key and NOT_IN_HEAP state
@@ -441,6 +499,7 @@ cdef void _SF_in_first_pass_full(
         edge_idx = csc_edge_idx[i]
         insert(&pqueue, edge_idx, c_a_vec[edge_idx])
         u_j_c_a_vec[edge_idx] = c_a_vec[edge_idx]
+        skim_j_vec[edge_idx] = skim_col_vec[edge_idx]
 
     # first pass
     while pqueue.size > 0:
@@ -450,6 +509,9 @@ cdef void _SF_in_first_pass_full(
         tail_vert_idx = <size_t>tail_indices[edge_idx]
         u_i = u_i_vec[tail_vert_idx]
 
+        skim_i = skim_i_vec[tail_vert_idx]
+        skim_j = skim_j_vec[edge_idx]
+
         if u_i >= u_j_c_a:
 
             f_i = f_i_vec[tail_vert_idx]
@@ -458,15 +520,21 @@ cdef void _SF_in_first_pass_full(
             if (u_i < DATATYPE_INF) | (f_i > 0.0):
 
                 beta = f_i * u_i
+                beta_skim = f_i * skim_i
 
             else:
 
                 beta = 1.0
+                beta_skim = 0.0
 
             # update u_i
             f_a = f_a_vec[edge_idx]
+
             u_i_new = (beta + f_a * u_j_c_a) / (f_i + f_a)
             u_i_vec[tail_vert_idx] = u_i_new
+
+            skim_i_new = (beta_skim + f_a * skim_j) / (f_i + f_a)
+            skim_i_vec[tail_vert_idx] = skim_i_new
 
             # update f_i
             f_i_vec[tail_vert_idx] = f_i + f_a
@@ -477,6 +545,7 @@ cdef void _SF_in_first_pass_full(
         else:
 
             u_i_new = u_i
+            skim_i_new = skim_i
 
         # loop on incoming edges
         for i in range(<size_t>csc_indptr[tail_vert_idx], 
@@ -490,15 +559,20 @@ cdef void _SF_in_first_pass_full(
                 # u_j of current edge = u_i of outgoing edge
                 u_j_c_a = u_i_new + c_a_vec[edge_idx]
 
+                skim_j = skim_i_new
+
                 if edge_state == NOT_IN_HEAP:
 
                     insert(&pqueue, edge_idx, u_j_c_a)
                     u_j_c_a_vec[edge_idx] = u_j_c_a 
+                    skim_j_vec[edge_idx] = skim_j
+
 
                 elif (pqueue.Elements[edge_idx].key > u_j_c_a):
 
                     decrease_key(&pqueue, edge_idx, u_j_c_a)
                     u_j_c_a_vec[edge_idx] = u_j_c_a
+                    skim_j_vec[edge_idx] = skim_j
 
     free_heap(&pqueue)
 

@@ -37,11 +37,16 @@ class HyperpathGenerating:
     """
 
 
-    def __init__(self, edges, tail="tail", head="head", trav_time="trav_time", freq="freq", check_edges=False):
+    def __init__(self, edges, tail="tail", head="head", trav_time="trav_time", freq="freq",
+                                                                check_edges=False, skim_cols = None):
+
+        if skim_cols is None or not isinstance(skim_cols, list):
+            skim_cols = []
+
         # load the edges
         if check_edges:
-            self._check_edges(edges, tail, head, trav_time, freq)
-        self._edges = edges[[tail, head, trav_time, freq]].copy(deep=True)
+            self._check_edges(edges, tail, head, trav_time, freq, skim_cols)
+        self._edges = edges[[tail, head, trav_time, freq]+skim_cols].copy(deep=True)
         self.edge_count = len(self._edges)
 
         # remove inf values if any, and values close to zero
@@ -72,11 +77,17 @@ class HyperpathGenerating:
         self._freq = self._edges[freq].values.astype(DATATYPE_PY)
         self._tail = self._edges[tail].values.astype(np.uint32)
         self._head = self._edges[head].values.astype(np.uint32)
+        if skim_cols:
+            self._skim_cols = self._edges[skim_cols].values.astype(DATATYPE_PY)
+        else:
+            self._skim_cols = np.zeros(self._trav_time.shape[0], dtype=DATATYPE_PY)
 
     def run(self, origin, destination, volume, return_inf=False):
         # column storing the resulting edge volumes
         self._edges["volume"] = 0.0
-        self.u_i_vec = None
+        #self.u_i_vec = None
+        self.u_i_vec = np.zeros(self.vertex_count, dtype=DATATYPE_PY)
+        self.skim_i_vec = np.zeros(self.vertex_count, dtype=DATATYPE_PY)
 
         # input check
         if type(origin) is not list:
@@ -97,9 +108,9 @@ class HyperpathGenerating:
 
         destination_vertex_indices = d_vert_ids  # Only one index allowed so must be unique
 
-        cdef cnp.float64_t *u_i_vec
-
-        u_i_vec = compute_SF_in_parallel(
+        #cdef cnp.float64_t *u_i_vec
+        # u_i_vec = compute_SF_in_parallel(...)
+        compute_SF_in_parallel(
             self._indptr[:],
             self._edge_idx[:],
             self._trav_time[:],
@@ -115,10 +126,13 @@ class HyperpathGenerating:
             self.vertex_count,
             self._edges["volume"].shape[0],
             1,  # Single destination so no reason to parallelise
+            self._skim_cols[:],
+            self.u_i_vec,
+            self.skim_i_vec
         )
 
-        if u_i_vec != NULL:
-            self.u_i_vec = np.asarray(<cnp.float64_t[:self.vertex_count]> u_i_vec)
+        # if u_i_vec != NULL:
+        #     self.u_i_vec = np.asarray(<cnp.float64_t[:self.vertex_count]> u_i_vec)
 
     def _check_vertex_idx(self, idx):
         assert isinstance(idx, int)
@@ -129,19 +143,22 @@ class HyperpathGenerating:
         assert isinstance(v, float)
         assert v >= 0.0
 
-    def _check_edges(self, edges, tail, head, trav_time, freq):
+    def _check_edges(self, edges, tail, head, trav_time, freq, skim_cols):
+
         if type(edges) != pd.core.frame.DataFrame:
             raise TypeError("edges should be a pandas DataFrame")
 
-        for col in [tail, head, trav_time, freq]:
+        cols = [tail, head, trav_time, freq] + skim_cols
+
+        for col in cols:
             if col not in edges:
                 raise KeyError(f"edge column '{col}' not found in graph edges dataframe")
 
-        if edges[[tail, head, trav_time, freq]].isna().any().any():
+        if edges[cols].isna().any().any():
             raise ValueError(
                 " ".join(
-                    [
-                        f"edges[[{tail}, {head}, {trav_time}, {freq}]] ",
+                    [   f"edges[[{', '.join(map(str, cols))}]]",
+                        #f"edges[[{tail}, {head}, {trav_time}, {freq}]] ",
                         "should not have any missing value",
                     ]
                 )
@@ -151,71 +168,71 @@ class HyperpathGenerating:
             if not pd.api.types.is_integer_dtype(edges[col].dtype):
                 raise TypeError(f"column '{col}' should be of integer type")
 
-        for col in [trav_time, freq]:
+        for col in [trav_time, freq] + skim_cols:
             if not pd.api.types.is_numeric_dtype(edges[col].dtype):
                 raise TypeError(f"column '{col}' should be of numeric type")
 
             if edges[col].min() < 0.0:
                 raise ValueError(f"column '{col}' should be nonnegative")
 
-    def assign(
-        self,
-        origin_column,
-        destination_column,
-        demand_column,
-        check_demand=False,
-        threads=None
-    ):
-        """
-        Assigns demand to the edges of the graph.
+    # def assign(
+    #     self,
+    #     origin_column,
+    #     destination_column,
+    #     demand_column,
+    #     check_demand=False,
+    #     threads=None
+    # ):
+    #     """
+    #     Assigns demand to the edges of the graph.
 
-        Assumes the ``*_column`` arguments are provided as numpy arrays that form a COO sprase matrix.
+    #     Assumes the ``*_column`` arguments are provided as numpy arrays that form a COO sprase matrix.
 
-        :Arguments:
-            **origin_column** (:obj:`np.ndarray`): The column for the origin vertices (*Optional*, default is "orig_vert_idx").
+    #     :Arguments:
+    #         **origin_column** (:obj:`np.ndarray`): The column for the origin vertices (*Optional*, default is "orig_vert_idx").
 
-            **destination_column** (:obj:`np.ndarray`): The column or the destination vertices (*Optional*, default is "dest_vert_idx").
+    #         **destination_column** (:obj:`np.ndarray`): The column or the destination vertices (*Optional*, default is "dest_vert_idx").
 
-            **demand_column** (:obj:`np.ndarray`): The column for the demand values (*Optional*, default is "demand").
+    #         **demand_column** (:obj:`np.ndarray`): The column for the demand values (*Optional*, default is "demand").
 
-            **check_demand** (:obj:`bool`): If True, check the validity of the demand data (*Optional*, default is ``False``).
+    #         **check_demand** (:obj:`bool`): If True, check the validity of the demand data (*Optional*, default is ``False``).
 
-            **threads** (:obj:`int`):The number of threads to use for computation (*Optional*, default is 0, using all available threads).
-        """
+    #         **threads** (:obj:`int`):The number of threads to use for computation (*Optional*, default is 0, using all available threads).
+    #     """
 
-        # check the input demand paramater
-        if check_demand:
-            self._check_demand(origin_column, destination_column, demand_column)
+    #     # check the input demand paramater
+    #     if check_demand:
+    #         self._check_demand(origin_column, destination_column, demand_column)
 
-        if threads is None:
-            threads = 0  # Default to all threads
+    #     if threads is None:
+    #         threads = 0  # Default to all threads
 
-        # initialize the column storing the resulting edge volumes
-        self._edges["volume"] = 0.0
+    #     # initialize the column storing the resulting edge volumes
+    #     self._edges["volume"] = 0.0
 
-        # travel time is computed but not saved into an array in the following
-        self.u_i_vec = None
+    #     # travel time is computed but not saved into an array in the following
+    #     self.u_i_vec = None
 
-        # get the list of all destinations
-        destination_vertex_indices = np.unique(destination_column)
+    #     # get the list of all destinations
+    #     destination_vertex_indices = np.unique(destination_column)
 
-        compute_SF_in_parallel(
-            self._indptr[:],
-            self._edge_idx[:],
-            self._trav_time[:],
-            self._freq[:],
-            self._tail[:],
-            self._head[:],
-            destination_column[:],
-            destination_vertex_indices[:],
-            origin_column[:],
-            demand_column[:],
-            self._edges["volume"].values,
-            False,
-            self.vertex_count,
-            self._edges["volume"].shape[0],
-            (multiprocessing.cpu_count() if threads < 1 else threads)
-        )
+    #     compute_SF_in_parallel(
+    #         self._indptr[:],
+    #         self._edge_idx[:],
+    #         self._trav_time[:],
+    #         self._freq[:],
+    #         self._tail[:],
+    #         self._head[:],
+    #         destination_column[:],
+    #         destination_vertex_indices[:],
+    #         origin_column[:],
+    #         demand_column[:],
+    #         self._edges["volume"].values,
+    #         False,
+    #         self.vertex_count,
+    #         self._edges["volume"].shape[0],
+    #         (multiprocessing.cpu_count() if threads < 1 else threads)
+    #     )
 
     def _check_demand(self, origin_column, destination_column, demand_column):
         for col, col_name in zip([origin_column, destination_column, demand_column], ["origin", "destination", "demand"]):
