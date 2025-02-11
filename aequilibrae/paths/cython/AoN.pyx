@@ -46,6 +46,7 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
     cdef double [:] g_view = graph.compact_cost
     cdef long long [:] ids_graph_view = graph.compact_graph.id.values
     cdef long long [:] original_b_nodes_view = graph.compact_graph.b_node.values
+    cdef long long [:] nodes_to_indices = graph.compact_nodes_to_indices
 
     if skims > 0:
         gskim = graph.compact_skims
@@ -101,7 +102,9 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
         select_link = True
 
     # Destination set
-    cdef unsigned char [:] destinations = aux_result.destinations[curr_thread, :]
+    tmp = np.zeros(nodes, dtype=bool)
+    tmp[demand_view.sum(axis=1).nonzero()] = True
+    cdef unsigned char [:] destinations = tmp
 
     # Now we do all procedures with NO GIL
     with nogil:
@@ -116,10 +119,11 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
 
         w = path_finding(origin_index,
                          destinations,
-                         zones,
+                         -1 if skims > 0 else zones,
                          g_view,
                          b_nodes_view,
                          graph_fs_view,
+                         nodes_to_indices,
                          predecessors_view,
                          ids_graph_view,
                          conn_view,
@@ -219,16 +223,15 @@ def path_computation(origin, destination, graph, results):
 
     new_b_nodes = graph.graph.b_node.values.copy()
     cdef long long [:] b_nodes_view = new_b_nodes
+    cdef long long [:] nodes_to_indices_view = graph.nodes_to_indices
 
     cdef bint a_star_bint = results.a_star
     cdef double [:] lat_view
     cdef double [:] lon_view
-    cdef long long [:] nodes_to_indices_view
     cdef Heuristic heuristic
     if results.a_star:
         lat_view = graph.lonlat_index.lat.values
         lon_view = graph.lonlat_index.lon.values
-        nodes_to_indices_view = graph.nodes_to_indices
         heuristic = HEURISTIC_MAP[results._heuristic]
 
     # Destination set
@@ -272,6 +275,7 @@ def path_computation(origin, destination, graph, results):
                              g_view,
                              b_nodes_view,
                              graph_fs_view,
+                             nodes_to_indices_view,
                              predecessors_view,
                              ids_graph_view,
                              conn_view,
@@ -428,6 +432,7 @@ def skimming_single_origin(origin, graph, result, aux_result, curr_thread):
     cdef double [:] g_view = graph.compact_cost
     cdef long long [:] ids_graph_view = graph.compact_graph.id.values
     cdef long long [:] original_b_nodes_view = graph.compact_graph.b_node.values
+    cdef long long [:] nodes_to_indices = graph.compact_nodes_to_indices
     cdef double [:, :] graph_skim_view = graph.compact_skims[:, :]
 
     cdef double [:, :] final_skim_matrices_view = result.skims.matrix_view[origin_index, :, :]
@@ -440,7 +445,7 @@ def skimming_single_origin(origin, graph, result, aux_result, curr_thread):
     cdef double [:, :] skim_matrix_view = aux_result.temporary_skims[curr_thread, :, :]
 
     # Destination set
-    cdef unsigned char [:] destinations = aux_result.destinations[curr_thread, :]
+    cdef unsigned char [:] destinations = np.array([], dtype=bool)
 
     # Now we do all procedures with NO GIL
     with nogil:
@@ -454,10 +459,11 @@ def skimming_single_origin(origin, graph, result, aux_result, curr_thread):
                                     original_b_nodes_view)
         w = path_finding(origin_index,
                          destinations,
-                         zones,  # destination index to disable early exit
+                         -1,  # destination index to disable early exit
                          g_view,
                          b_nodes_view,
                          graph_fs_view,
+                         nodes_to_indices,
                          predecessors_view,
                          ids_graph_view,
                          conn_view,
