@@ -165,7 +165,7 @@ class GraphBase(ABC):  # noqa: B024
                 raise ValueError("Centroid IDs need to be positive")
             if centroids.shape[0] != np.unique(centroids).shape[0]:
                 raise ValueError("Centroid IDs are not unique")
-            self.centroids = np.unique(np.array(centroids, np.uint32))
+            self.centroids = np.array(centroids, np.uint32)
         else:
             self.centroids = np.array([], np.uint32)
 
