@@ -44,7 +44,7 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
     # Destination set
     cdef long long nnz_destinations = 0
     cdef unsigned char [:] destinations
-    if skims > 0:
+    if skims == 0:
         tmp = np.zeros(nodes, dtype=bool)
         nonzero = matrix.matrix_view[origin_index, :, :].sum(axis=1).nonzero()[0]
         tmp[nonzero] = True
