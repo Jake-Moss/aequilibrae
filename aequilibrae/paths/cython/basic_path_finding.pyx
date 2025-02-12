@@ -303,18 +303,12 @@ cpdef int path_finding(
     double[:] graph_costs,
     long long [:] csr_indices,
     long long [:] graph_fs,
-    long long [:] nodes_to_indices,
     long long [:] pred,
     long long [:] ids,
     long long [:] connectors,
     long long [:] reached_first
 ) noexcept nogil:
     cdef unsigned int M = pred.shape[0]
-
-    if destination_count == 0:
-        with gil:
-            raise ValueError("destination_count must be either -1 (for all destination), or > 0")
-
     cdef:
         size_t tail_vert_idx, head_vert_idx, idx  # indices
         DTYPE_t tail_vert_val, head_vert_val  # vertex travel times
@@ -344,19 +338,19 @@ cpdef int path_finding(
 
         if destination_count < 0:
             pass  # early exit is disabled
-        elif destination_count > 0 and destinations[nodes_to_indices[tail_vert_idx]]:
-            destinations[nodes_to_indices[tail_vert_idx]] = False
+        elif destination_count > 0 and destinations[tail_vert_idx]:
+            destinations[tail_vert_idx] = False
             destination_count = destination_count - 1
 
-            # If we've just found the last destination, we can exit here. No need to explore any more edges
-            if destination_count == 0:
-                # If we wish to reuse the tree we've constructed in update_path_trace we need to mark the un-scanned
-                # nodes as unreachable. The nodes not in the heap (NOT_IN_HEAP) are already -1
-                for idx in range(pqueue.length):
-                    if pqueue.Elements[idx].state == IN_HEAP:
-                        pred[idx] = -1
-                        connectors[idx] = -1
-                break
+        # If we've just found the last destination, we can exit here. No need to explore any more edges
+        if destination_count == 0:
+            # If we wish to reuse the tree we've constructed in update_path_trace we need to mark the un-scanned
+            # nodes as unreachable. The nodes not in the heap (NOT_IN_HEAP) are already -1
+            for idx in range(pqueue.length):
+                if pqueue.Elements[idx].state == IN_HEAP:
+                    pred[idx] = -1
+                    connectors[idx] = -1
+            break
 
         tail_vert_val = pqueue.Elements[tail_vert_idx].key
 

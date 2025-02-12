@@ -422,7 +422,6 @@ cdef class RouteChoiceSet:
                 thread_cost,
                 thread_b_nodes,
                 self.graph_fs_view,
-                self.nodes_to_indices_view,
                 thread_predecessors,
                 self.ids_graph_view,
                 thread_conn,

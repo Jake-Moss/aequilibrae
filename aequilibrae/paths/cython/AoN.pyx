@@ -41,6 +41,22 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
     cdef double [:, :] demand_view = matrix.matrix_view[origin_index, :, :]
     classes = matrix.matrix_view.shape[2]
 
+    # Destination set
+    cdef long long nnz_destinations = 0
+    cdef unsigned char [:] destinations
+    if skims > 0:
+        tmp = np.zeros(nodes, dtype=bool)
+        nonzero = matrix.matrix_view[origin_index, :, :].sum(axis=1).nonzero()[0]
+        tmp[nonzero] = True
+
+        destinations = tmp
+        nnz_destinations = len(nonzero)
+
+    # If theres no demand, disable early exit
+    if nnz_destinations == 0:
+        destinations = np.array([], dtype=bool)
+        nnz_destinations = -1
+
     # views from the graph
     cdef long long [:] graph_fs_view = graph.compact_fs
     cdef double [:] g_view = graph.compact_cost
@@ -101,11 +117,6 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
         link_list = aux_result.select_links[:, :]  # Read only, don't need to slice on curr_thread
         select_link = True
 
-    # Destination set
-    tmp = np.zeros(nodes, dtype=bool)
-    tmp[demand_view.sum(axis=1).nonzero()] = True
-    cdef unsigned char [:] destinations = tmp
-
     # Now we do all procedures with NO GIL
     with nogil:
         if block_flows_through_centroids:  # Unblocks the centroid if that is the case
@@ -119,11 +130,10 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
 
         w = path_finding(origin_index,
                          destinations,
-                         -1 if skims > 0 else zones,
+                         -1 if skims > 0 else nnz_destinations,
                          g_view,
                          b_nodes_view,
                          graph_fs_view,
-                         nodes_to_indices,
                          predecessors_view,
                          ids_graph_view,
                          conn_view,
@@ -223,15 +233,16 @@ def path_computation(origin, destination, graph, results):
 
     new_b_nodes = graph.graph.b_node.values.copy()
     cdef long long [:] b_nodes_view = new_b_nodes
-    cdef long long [:] nodes_to_indices_view = graph.nodes_to_indices
 
     cdef bint a_star_bint = results.a_star
     cdef double [:] lat_view
     cdef double [:] lon_view
+    cdef long long [:] nodes_to_indices_view
     cdef Heuristic heuristic
     if results.a_star:
         lat_view = graph.lonlat_index.lat.values
         lon_view = graph.lonlat_index.lon.values
+        nodes_to_indices_view = graph.nodes_to_indices
         heuristic = HEURISTIC_MAP[results._heuristic]
 
     # Destination set
@@ -275,7 +286,6 @@ def path_computation(origin, destination, graph, results):
                              g_view,
                              b_nodes_view,
                              graph_fs_view,
-                             nodes_to_indices_view,
                              predecessors_view,
                              ids_graph_view,
                              conn_view,
@@ -432,7 +442,6 @@ def skimming_single_origin(origin, graph, result, aux_result, curr_thread):
     cdef double [:] g_view = graph.compact_cost
     cdef long long [:] ids_graph_view = graph.compact_graph.id.values
     cdef long long [:] original_b_nodes_view = graph.compact_graph.b_node.values
-    cdef long long [:] nodes_to_indices = graph.compact_nodes_to_indices
     cdef double [:, :] graph_skim_view = graph.compact_skims[:, :]
 
     cdef double [:, :] final_skim_matrices_view = result.skims.matrix_view[origin_index, :, :]
@@ -463,7 +472,6 @@ def skimming_single_origin(origin, graph, result, aux_result, curr_thread):
                          g_view,
                          b_nodes_view,
                          graph_fs_view,
-                         nodes_to_indices,
                          predecessors_view,
                          ids_graph_view,
                          conn_view,
