@@ -1,16 +1,17 @@
+import dataclasses
 import pickle
 import uuid
+import warnings
 from abc import ABC
 from datetime import datetime
 from os.path import join
-from typing import List, Tuple, Optional, Union
-import dataclasses
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from aequilibrae.paths.graph_building import build_compressed_graph, create_compressed_link_network_mapping
 
 from aequilibrae.context import get_logger
+from aequilibrae.paths.graph_building import build_compressed_graph, create_compressed_link_network_mapping
 
 
 @dataclasses.dataclass
@@ -241,6 +242,8 @@ class GraphBase(ABC):  # noqa: B024
 
         # Now we take care of centroids
         nodes = np.unique(np.hstack((df.a_node.values, df.b_node.values))).astype(self.__integer_type)
+        if not np.isin(centroids, nodes, assume_unique=True).all():
+            warnings.warn("Found centroids not present in the graph!")
         nodes = np.setdiff1d(nodes, centroids, assume_unique=True)
         all_nodes = np.hstack((centroids, nodes)).astype(self.__integer_type)
 

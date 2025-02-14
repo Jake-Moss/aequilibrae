@@ -296,23 +296,19 @@ cpdef void skim_multiple_fields(long origin,
 @cython.wraparound(False)
 @cython.embedsignature(True)
 @cython.boundscheck(False)  # turn of bounds-checking for entire function
-cpdef int path_finding(long origin,
-                       unsigned char [:] destinations,
-                       long long destination_count,
-                       double[:] graph_costs,
-                       long long [:] csr_indices,
-                       long long [:] graph_fs,
-                       long long [:] pred,
-                       long long [:] ids,
-                       long long [:] connectors,
-                       long long [:] reached_first) noexcept nogil:
-
+cpdef int path_finding(
+    long origin,
+    unsigned char [:] destinations,
+    long long destination_count,
+    double[:] graph_costs,
+    long long [:] csr_indices,
+    long long [:] graph_fs,
+    long long [:] pred,
+    long long [:] ids,
+    long long [:] connectors,
+    long long [:] reached_first
+) noexcept nogil:
     cdef unsigned int M = pred.shape[0]
-
-    if destination_count == 0:
-        with gil:
-            raise ValueError("destination_count must be either -1 (for all destination), or > 0")
-
     cdef:
         size_t tail_vert_idx, head_vert_idx, idx  # indices
         DTYPE_t tail_vert_val, head_vert_val  # vertex travel times
