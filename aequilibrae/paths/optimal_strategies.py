@@ -53,10 +53,3 @@ class OptimalStrategies:
             self.__results[cls_id].link_loads = hyperpath._edges["volume"].values
             if hyperpath._skimming:
                 self.__results[cls_id].skim_results = hyperpath.skim_matrix
-
-    # def run(self, origin=None, destination=None, volume=None):
-    #     for cls_id, hyperpath in self.__classes.items():
-    #         self.__logger.info(f"Executing S&F single run for {cls_id}")
-
-    #         hyperpath.run(origin, destination, volume)
-    #         self.__results[cls_id].link_loads.data["volume"] = hyperpath._edges["volume"].values
