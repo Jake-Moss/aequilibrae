@@ -73,7 +73,6 @@ cdef void _coo_tocsc_uint32(
         size_t n_edge = <size_t>Bi.shape[0]
         cnp.uint32_t temp, cumsum, last
 
-
     for i in range(n_edge):
         Bp[<size_t>Aj[i]] += 1
 
@@ -90,7 +89,6 @@ cdef void _coo_tocsc_uint32(
         Bi[dest] = Ai[i]
         Bx[dest] = Ax[i]
         Bp[col] += 1
-
 
     last = 0
     for i in range(n_vert + 1):
@@ -170,7 +168,6 @@ cpdef convert_graph_to_csc_uint32(edges, tail, head, data, vertex_count) noexcep
     )
 
     return rs_indptr, rs_indices, rs_data
-
 
 
 # Both boundscheck(False) and initializedcheck(False) are required for this function to operate,
@@ -318,11 +315,8 @@ cdef void compute_SF_in_parallel(
         for k in range(vertex_count):
             u_i_vec_view[k] = u_i_vec_out[k]
 
-
-    free(u_i_vec_out)    
-
+    free(u_i_vec_out)
     free(skim_i_vec_out)
-
     free(edge_volume)
 
 
@@ -458,7 +452,6 @@ cdef void compute_SF_in(
             if h_a_vec[i] == 0: # if the edge is not on the hyperpath
                 u_j_c_a_vec[i] = 1.0
 
-
         argsort(u_j_c_a_vec, edge_indices, edge_count)
 
         _SF_in_second_pass(
@@ -529,7 +522,6 @@ cdef void _SF_in_first_pass_full(
         tail_vert_idx = <size_t>tail_indices[edge_idx]
         u_i = u_i_vec[tail_vert_idx]
 
-
         if u_i >= u_j_c_a:
 
             f_i = f_i_vec[tail_vert_idx]
@@ -596,7 +588,6 @@ cdef void _SF_in_first_pass_full(
                     u_j_c_a_vec[edge_idx] = u_j_c_a 
                     for j in range(<size_t>n_skim_cols):
                         skim_j_vec[edge_idx + j * edge_count] = skim_j_new_vec[j]
-
 
                 elif (pqueue.Elements[edge_idx].key > u_j_c_a):
 

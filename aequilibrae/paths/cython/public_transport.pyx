@@ -1,20 +1,15 @@
 # cython: language_level=3
 
-import pandas as pd
+import multiprocessing
 import os
-from uuid import uuid4
-from datetime import datetime
 import socket
 
-import numpy as np
-import multiprocessing
-cimport numpy as cnp
-cimport openmp
+import pandas as pd
 
-from aequilibrae.project.database_connection import database_connection
 from aequilibrae.context import get_active_project
 from aequilibrae.matrix import AequilibraeMatrix
-import sqlite3
+from aequilibrae.project.database_connection import database_path
+from aequilibrae.utils.db_utils import commit_and_close
 
 include 'hyperpath.pyx'
 
@@ -52,7 +47,6 @@ class HyperpathGenerating:
             self._check_edges(edges, tail, head, trav_time, freq, skim_cols)
         self._edges = edges[list(set([tail, head, trav_time, freq]+skim_cols))].copy(deep=True)
         self.edge_count = len(self._edges)
-
 
         # remove inf values if any, and values close to zero
         self._edges[trav_time] = np.where(
@@ -177,10 +171,6 @@ class HyperpathGenerating:
         n = len(self._centroids)
         origin_values = np.repeat(self._centroids, n)
 
-        # # skip if all centroids combinations are already listed
-        # if origin_values.shape == origin_column.shape:
-        #     return origin_column, destination_column, demand_column
-
         destination_values = np.tile(self._centroids, n)
 
         check_bool = origin_values != destination_values
@@ -200,7 +190,6 @@ class HyperpathGenerating:
         # column storing the resulting edge volumes
         self._edges["volume"] = 0.0
         self.u_i_vec = np.zeros(self.vertex_count, dtype=DATATYPE_PY)
-        
 
         # input check
         if type(origin) is not list:
@@ -419,7 +408,7 @@ class HyperpathGenerating:
 
     def info(self) -> dict:
         info = {
-            "Algorithm": "Spiess, Heinz & Florian, Michael Hyperpath generation",
+            "Algorithm": "Spiess, Heinz & Florian, Michael - Hyperpath generation",
             "Computer name": socket.gethostname(),
             "Procedure ID": self.procedure_id,
         }
@@ -445,17 +434,12 @@ class HyperpathGenerating:
 
         if not project:
             project = project or get_active_project()
-        conn = sqlite3.connect(os.path.join(project.project_base_path, "results_database.sqlite"))
-        df.to_sql(table_name, conn)
-        conn.close()
+        with commit_and_close(os.path.join(project.project_base_path, "results_database.sqlite")) as conn:
+            df.to_sql(table_name, conn)
 
-        conn = database_connection("transit", project.project_base_path)
-        report = {"setup": self.info()}
-        data = [table_name, "hyperpath assignment", self.procedure_id, str(report), self.procedure_date, self.description]
-        conn.execute(
-            """Insert into results(table_name, procedure, procedure_id, procedure_report, timestamp,
-                                            description) Values(?,?,?,?,?,?)""",
-            data,
-        )
-        conn.commit()
-        conn.close()
+        rep = {"setup": self.info()}
+        data = [table_name, "hyperpath assignment", self.procedure_id, str(rep), self.procedure_date, self.description]
+        sql = """Insert into results(table_name, procedure, procedure_id, procedure_report, timestamp,
+                                                                    description) Values(?,?,?,?,?,?)""",
+        with commit_and_close(database_path("transit", project.project_base_path)) as conn:
+            conn.execute(sql, data)
