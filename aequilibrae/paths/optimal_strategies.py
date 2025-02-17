@@ -25,7 +25,7 @@ class OptimalStrategies:
                 trav_time=assig_spec._config["Time field"],
                 freq=assig_spec._config["Frequency field"],
                 skim_cols=assig_spec._config["Skimming Fields"],
-                centroids=cls.graph.centroids
+                centroids=cls.graph.centroids,
             )
 
             demand = sparse.coo_matrix(cls.matrix.matrix[cls.matrix_core], dtype=np.float64)
