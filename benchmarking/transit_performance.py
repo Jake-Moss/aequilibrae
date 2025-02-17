@@ -14,27 +14,31 @@ import time
 
 def run_example(from_model, zones):
 
-    examples_dir = 'temp_examples'
+    examples_dir = "temp_examples"
     time_results = []
 
     for n_zones in zones:
 
-        path = join(examples_dir, f'{from_model}_{n_zones}')
+        path = join(examples_dir, f"{from_model}_{n_zones}")
 
         if os.path.isdir(path):
 
             project = Project.from_path(path)
 
         else:
-            print('example not created.')
+            print("example not created.")
             continue
 
         print(path)
 
         data = Transit(project)
 
-        graph = data.create_graph(with_outer_stop_transfers=False, with_walking_edges=False,
-                                  blocking_centroid_flows=False, connector_method="overlapping_regions")
+        graph = data.create_graph(
+            with_outer_stop_transfers=False,
+            with_walking_edges=False,
+            blocking_centroid_flows=False,
+            connector_method="overlapping_regions",
+        )
 
         project.network.build_graphs()
 
@@ -43,8 +47,8 @@ def run_example(from_model, zones):
 
         try:
             data.save_graphs()
-        except:
-            print('graphs data already saved.')
+        except Exception as e:
+            print(f"graphs data already saved. {e.args}")
 
         data.load()
 
@@ -58,30 +62,31 @@ def run_example(from_model, zones):
 
         zones_in_the_model = len(transit_graph.centroids)
 
-        names_list = ['pt']
+        names_list = ["pt"]
 
         mat = AequilibraeMatrix()
-        mat.create_empty(zones=zones_in_the_model,
-                         matrix_names=names_list,
-                         memory_only=True)
+        mat.create_empty(zones=zones_in_the_model, matrix_names=names_list, memory_only=True)
         mat.index = transit_graph.centroids[:]
         mat.matrices[:, :, 0] = np.full((zones_in_the_model, zones_in_the_model), 1.0)
         mat.computational_view()
         # mat.get_matrix('pt')
 
-        transit_graph.graph['boardings'] = transit_graph.graph['link_type'].apply(lambda x: 1 if x == 'boarding' else 0)
-        transit_graph.graph['in_vehicle_trav_time'] = np.where(
-            transit_graph.graph['link_type'].isin(['on-board', 'dwell']), 0, transit_graph.graph['trav_time'])
-        transit_graph.graph['egress_trav_time'] = np.where(
-            transit_graph.graph['link_type'] != 'egress_connector', 0, transit_graph.graph['trav_time'])
-        transit_graph.graph['access_trav_time'] = np.where(
-            transit_graph.graph['link_type'] != 'access_connector', 0, transit_graph.graph['trav_time'])
+        transit_graph.graph["boardings"] = transit_graph.graph["link_type"].apply(lambda x: 1 if x == "boarding" else 0)
+        transit_graph.graph["in_vehicle_trav_time"] = np.where(
+            transit_graph.graph["link_type"].isin(["on-board", "dwell"]), 0, transit_graph.graph["trav_time"]
+        )
+        transit_graph.graph["egress_trav_time"] = np.where(
+            transit_graph.graph["link_type"] != "egress_connector", 0, transit_graph.graph["trav_time"]
+        )
+        transit_graph.graph["access_trav_time"] = np.where(
+            transit_graph.graph["link_type"] != "access_connector", 0, transit_graph.graph["trav_time"]
+        )
 
         skim_cols = ["trav_time", "boardings", "in_vehicle_trav_time", "egress_trav_time", "access_trav_time"]
 
         assigclass = TransitClass(name="pt", graph=transit_graph, matrix=mat)
 
-        print(f'centroids: {transit_graph.centroids.shape[0]}')
+        print(f"centroids: {transit_graph.centroids.shape[0]}")
         for i in range(0, len(skim_cols)):
 
             assig = TransitAssignment()
@@ -109,15 +114,15 @@ def run_example(from_model, zones):
             if i != 0:
                 assert len(assig.get_skim_results()[0].matrix) == i
 
-            print(f'{len(assig.results())}')
+            print(f"{len(assig.results())}")
 
             del assig
 
         project.close()
 
-    return ({from_model: pd.DataFrame(time_results, columns=['zones', 'skim_cols', 'elapsed_time'])})
+    return {from_model: pd.DataFrame(time_results, columns=["zones", "skim_cols", "elapsed_time"])}
 
 
-from_model = 'lyon'
+from_model = "lyon"
 results = run_example(from_model, [2000])
-results = pd.read_csv(f'{from_model}_performance_results.csv', index_col=0)
+results = pd.read_csv(f"{from_model}_performance_results.csv", index_col=0)
