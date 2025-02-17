@@ -1,8 +1,8 @@
 # cython: language_level=3
 
 import multiprocessing
-import os
 import socket
+from pathlib import Path
 
 import pandas as pd
 
@@ -434,7 +434,7 @@ class HyperpathGenerating:
 
         if not project:
             project = project or get_active_project()
-        with commit_and_close(os.path.join(project.project_base_path, "results_database.sqlite")) as conn:
+        with commit_and_close(Path(project.project_base_path) / "results_database.sqlite", missing_ok=True) as conn:
             df.to_sql(table_name, conn)
 
         rep = {"setup": self.info()}
