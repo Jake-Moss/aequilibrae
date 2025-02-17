@@ -301,6 +301,8 @@ class TransitAssignmentResults(AssignmentResultsBase):
         super().__init__()
 
         self.link_loads = np.array([])
+        # self.skim_results = np.array([])
+        # self.skims = AequilibraeMatrix()
 
     def prepare(self, graph: TransitGraph, matrix: AequilibraeMatrix) -> None:
         """

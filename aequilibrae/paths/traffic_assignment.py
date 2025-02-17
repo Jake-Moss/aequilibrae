@@ -1088,4 +1088,7 @@ class TransitAssignment(AssignmentBase):
             if not isinstance(skimming_fields, list):
                 raise TypeError("Skimming Fields should be defined on a list, tuple or set")
 
+            # for field in skimming_fields:
+            #     self._check_field(field, True)
+
         self._config["Skimming Fields"] = skimming_fields
