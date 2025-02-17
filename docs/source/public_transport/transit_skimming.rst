@@ -34,11 +34,11 @@ skimming travel time in rail only.
 
 .. code-block:: python
 
-    >>> transit_graph.graph["rail_trav_time"] = transit_graph.graph.trav_time
+    >>> transit_graph.graph["rail_trav_time"] = np.where(
+            transit_graph.graph["link_type"].isin(["on-board", "dwell"]), 0, transit_graph.graph["trav_time"]
+        )
+
     >>> all_routes = transit.get_table("routes")
     >>> rail_ids = all_routes.query("route_type in [1, 2]").route_id.to_numpy()
     # Assign zero travel time to all non-rail links
     >>> transit_graph.graph.loc[~transit_graph.graph.line_id.isin(rail_ids),"rail_trav_time"] =0
-    >>> transit_graph.graph["in_vehicle_trav_time"] = np.where(
-            transit_graph.graph["link_type"].isin(["on-board", "dwell"]), 0, transit_graph.graph["trav_time"]
-        )
