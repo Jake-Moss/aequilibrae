@@ -44,15 +44,20 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
     # Destination set
     cdef long long nnz_destinations = 0
     cdef unsigned char [:] destinations
-    if skims == 0:
-        tmp = np.zeros(nodes, dtype=bool)
+
+    tmp = np.zeros(nodes, dtype=bool)
+    if not skims:
         nonzero = matrix.matrix_view[origin_index, :, :].sum(axis=1).nonzero()[0]
         tmp[nonzero] = True
-
-        destinations = tmp
         nnz_destinations = len(nonzero)
+    else:
+        tmp[graph.nodes_to_indices[graph.centroids]] = True
+        nnz_destinations = zones
 
-    # If theres no demand, disable early exit
+    destinations = tmp
+
+    # If there's no demand, disable early exit. We could let this fall through an immediately exit the path finding, but
+    # this case should never happen in assignment so this is a little more flexible.
     if nnz_destinations == 0:
         destinations = np.array([], dtype=bool)
         nnz_destinations = -1
@@ -171,16 +176,14 @@ def one_to_all(origin, matrix, graph, result, aux_result, curr_thread):
             sl_network_loading(link_list, demand_view, predecessors_view, conn_view, link_loads_view, sl_od_matrix_view,
                                sl_link_loading_view, has_flow_mask, classes)
         else:
-            # do ONLY regular loading (via cascade assignment)
-            network_loading(classes,
-                            demand_view,
-                            predecessors_view,
-                            conn_view,
-                            link_loads_view,
-                            no_path_view,
-                            reached_first_view,
-                            node_load_view,
-                            w)
+            # do ONLY regular loading
+            network_loading(
+                classes,
+                demand_view,
+                predecessors_view,
+                conn_view,
+                link_loads_view
+            )
 
     if result.save_path_file:
         save_path_file(origin_index, links, zones, predecessors_view, conn_view, path_file_base, path_index_file_base, write_feather)

@@ -42,3 +42,9 @@ skimming travel time in rail only.
     >>> rail_ids = all_routes.query("route_type in [1, 2]").route_id.to_numpy()
     # Assign zero travel time to all non-rail links
     >>> transit_graph.graph.loc[~transit_graph.graph.line_id.isin(rail_ids),"rail_trav_time"] =0
+
+    >>> assig = TransitAssignment()
+
+    # Skimming must be set after a transit assignment class is added
+    >>> #assig.add_class(assigclass)
+    >>> assig.set_skimming_fields(skim_cols[:i])
