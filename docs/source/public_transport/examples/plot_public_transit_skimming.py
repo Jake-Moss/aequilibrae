@@ -2,7 +2,7 @@
 .. _example_transit_skimming:
 
 Public transport assignment with skimming
-===================================================
+=========================================
 
 In this example, we build on the transit assignment example and add skimming to it.
 
@@ -23,15 +23,15 @@ We use data from Coquimbo, a city in La Serena Metropolitan Area in Chile.
 #     * :func:`aequilibrae.paths.TransitAssignment`
 #     * :func:`aequilibrae.matrix.AequilibraeMatrix`
 
+# %% 
+# Imports for example construction
 from os.path import join
 from tempfile import gettempdir
-# Imports for example construction
 from uuid import uuid4
 
 import numpy as np
 
 from aequilibrae.matrix import AequilibraeMatrix
-# %%
 from aequilibrae.paths import TransitAssignment, TransitClass
 from aequilibrae.project.database_connection import database_connection
 from aequilibrae.transit import Transit
@@ -61,8 +61,12 @@ data = Transit(project)
 # Creating the graph should only take a moment. By default zoning information is pulled from the project network. 
 # If you have your own zoning information add it using ``graph.add_zones(zones)`` then ``graph.create_graph()``. 
 
-# %%
-graph = data.create_graph(with_outer_stop_transfers=False, with_walking_edges=False, blocking_centroid_flows=False, connector_method="overlapping_regions")
+graph = data.create_graph(
+    with_outer_stop_transfers=False, 
+    with_walking_edges=False, 
+    blocking_centroid_flows=False, 
+    connector_method="overlapping_regions"
+)
 
 # %%
 # Connector project matching
@@ -80,6 +84,8 @@ graph_db.vertices.drop(columns="geometry")
 # To perform an assignment we need to convert the graph builder into a graph.
 transit_graph = graph.to_transit_graph()
 
+# %%
+
 # Mock demand matrix
 zones = len(transit_graph.centroids)
 mat = AequilibraeMatrix()
@@ -91,8 +97,7 @@ mat.computational_view()
 # %%
 # Hyperpath generation/assignment
 # -------------------------------
-# We'll create a ``TransitAssignment`` object as well as a ``TransitClass``
-
+# We'll create a ``TransitAssignment`` object as well as a ``TransitClass``.
 
 # %%
 
@@ -116,7 +121,7 @@ assig.execute()
 # Saving results
 # --------------
 # We'll be saving the skimming results.
-# assig.save_results(table_name='hyperpath example')
+assig.save_results(table_name='hyperpath example')
 
 # %%
 # Wrapping up
