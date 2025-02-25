@@ -4,8 +4,8 @@
 Route Choice with sub-area analysis
 ===================================
 
-In this example, we show how to perform sub-area analysis using route choice assignment, for a city in La Serena
-Metropolitan Area in Chile.
+In this example, we show how to perform sub-area analysis using route choice assignment, 
+for a city in La Serena Metropolitan Area in Chile.
 
 .. admonition:: References
  
@@ -19,6 +19,7 @@ Metropolitan Area in Chile.
     * :func:`aequilibrae.paths.SubAreaAnalysis`
     * :func:`aequilibrae.matrix.AequilibraeMatrix`
 """
+
 # %%
 
 # Imports
@@ -58,15 +59,13 @@ logger.addHandler(stdout_handler)
 # %%
 # Model parameters
 # ----------------
-# We'll set the parameters for our route choice model. These are the parameters that will be used to calculate the
-# utility of each path. In our example, the utility is equal to :math:`distance * theta`,
-# and the path overlap factor (PSL) is equal to :math:`beta`.
+# We'll set the parameters for our route choice model. These are the parameters that will be
+# used to calculate the utility of each path. In our example, the utility is equal to
+# :math:`distance * theta`, and the path overlap factor (PSL) is equal to :math:`beta`.
 
-# Distance factor
-theta = 0.011
+theta = 0.011  # Distance factor
 
-# PSL parameter
-beta = 1.1
+beta = 1.1  # PSL parameter
 
 # %%
 # Let's build all graphs
@@ -95,7 +94,7 @@ graph.prepare_graph(graph.centroids)
 graph.set_graph("utility")
 
 # %%
-# We allow flows through "centroid connectors" because our centroids are not really centroids.
+# We allow flows through centroid connectors because our centroids are not really centroids.
 # If we have actual centroid connectors in the network (and more than one per centroid), then we
 # should remove them from the graph.
 graph.set_blocked_centroid_flows(False)
@@ -104,7 +103,8 @@ graph.graph.head()
 # %%
 # Mock demand matrix
 # ------------------
-# We'll create a mock demand matrix with demand ``10`` for every zone and prepare it for computation.
+#
+# We'll create a mock demand matrix with demand `10` for every zone and prepare it for computation.
 from aequilibrae.matrix import AequilibraeMatrix
 
 names_list = ["demand"]
@@ -118,9 +118,12 @@ mat.computational_view()
 # %%
 # Sub-area preparation
 # --------------------
-# We need to define some polygon for out sub-area analysis, here we'll use a section of zones and create out polygon as
-# the union of their geometry. It's best to choose a polygon that avoids any unnecessary intersections with links as
-# the resource requirements of this approach grow quadratically with the number of links cut.
+#
+# We need to define some polygon for out sub-area analysis, here we'll use a section of zones and
+# create out polygon as the union of their geometry. It's best to choose a polygon that avoids
+# any unnecessary intersections with links as the resource requirements of this approach grow
+# quadratically with the number of links cut.
+
 zones_of_interest = [29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 49, 50, 51, 52, 57, 58, 59, 60]
 zones = project.zoning.data.set_index("zone_id")
 zones = zones.loc[zones_of_interest]
@@ -129,20 +132,24 @@ zones.head()
 # %%
 # Sub-area analysis
 # -----------------
-# From here there are two main paths to conduct a sub-area analysis, manual or automated. AequilibraE ships with a small
-# class that handle most of the details regarding the implementation and extract of the relevant data. It also exposes
-# all the tools necessary to conduct this analysis yourself if you need fine grained control.
+#
+# From here there are two main paths to conduct a sub-area analysis, manual or automated.
+# AequilibraE ships with a small class that handle most of the details regarding the implementation
+# and extract of the relevant data. It also exposes all the tools necessary to conduct this analysis
+# yourself if you need fine grained control.
 
 # %%
 # Automated sub-area analysis
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# We first construct out SubAreaAnalysis object from the graph, zones, and matrix we previously constructed, then
-# configure the route choice assignment and execute it. From there the ``post_process`` method is able to use the route
-# choice assignment results to construct the desired demand matrix as a DataFrame.
+#
+# We first construct out ``SubAreaAnalysis`` object from the graph, zones, and matrix we previously
+# constructed, then configure the route choice assignment and execute it. From there the ``post_process``
+# method is able to use the route choice assignment results to construct the desired demand matrix
+# as a DataFrame.
 from aequilibrae.paths import SubAreaAnalysis
 
 subarea = SubAreaAnalysis(graph, zones, mat)
-subarea.rc.set_choice_set_generation("lp", max_routes=5, penalty=1.02, store_results=False)
+subarea.rc.set_choice_set_generation("lp", max_routes=3, penalty=1.02, store_results=False)
 subarea.rc.execute(perform_assignment=True)
 demand = subarea.post_process()
 demand
@@ -160,64 +167,54 @@ from aequilibrae.paths import RouteChoice
 
 rc = RouteChoice(graph)
 rc.add_demand(demand)
-rc.set_choice_set_generation("link-penalisation", max_routes=5, penalty=1.02, store_results=False, seed=123)
+rc.set_choice_set_generation("lp", max_routes=3, penalty=1.02, store_results=False, seed=123)
 rc.execute(perform_assignment=True)
 
 # %%
-# And plot the link loads for easy viewing
+# Let's take the union of the zones GeoDataFrame as a polygon
+poly = zones.union_all()
+poly
+
+# %%
+# And prepare the sub-area to plot.
 subarea_zone = folium.Polygon(
-    locations=[(x[1], x[0]) for x in zones.unary_union.boundary.coords],
+    locations=[(x[1], x[0]) for x in poly.boundary.coords],
     fill_color="blue",
-    fill_opacity=0.5,
+    fill_opacity=0.1,
     fill=True,
-    stroke=False,
+    weight=1,
 )
 
+
+# %%
+# We create a function to plot out link loads data more easily
 def plot_results(link_loads):
     link_loads = link_loads[link_loads.tot > 0]
     max_load = link_loads["tot"].max()
     links = project.network.links.data
     loaded_links = links.merge(link_loads, on="link_id", how="inner")
-
-    loads_lyr = folium.FeatureGroup("link_loads")
-
-    # Maximum thickness we would like is probably a 10, so let's make sure we don't go over that
     factor = 10 / max_load
 
-    # Let's create the layers
-    for _, rec in loaded_links.iterrows():
-        points = rec.geometry.wkt.replace("LINESTRING ", "").replace("(", "").replace(")", "").split(", ")
-        points = "[[" + "],[".join([p.replace(" ", ", ") for p in points]) + "]]"
-        # we need to take from x/y to lat/long
-        points = [[x[1], x[0]] for x in eval(points)]
-        _ = folium.vector_layers.PolyLine(
-            points,
-            tooltip=f"link_id: {rec.link_id}, Flow: {rec.tot:.3f}",
-            color="red",
-            weight=factor * rec.tot,
-        ).add_to(loads_lyr)
-    long, lat = project.conn.execute("select avg(xmin), avg(ymin) from idx_links_geometry").fetchone()
-
-    map_osm = folium.Map(location=[lat, long], tiles="Cartodb Positron", zoom_start=12)
-    loads_lyr.add_to(map_osm)
-    folium.LayerControl().add_to(map_osm)
-    return map_osm
+    return loaded_links.explore(
+        color="red",
+        style_kwds={
+            "style_function": lambda x: {
+                "weight": x["properties"]["tot"] * factor,
+            }
+        },
+    )
 
 
+# %%
+# And plot our data!
 map = plot_results(rc.get_load_results()["demand"])
 subarea_zone.add_to(map)
 map
 
 # %%
 # Sub-area further preparation
-# ````````````````````````````
-
-# %%
-# We take the union of this GeoDataFrame as our polygon.
-poly = zones.union_all()
-poly
-
-# %%
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
 # It's useful later on to know which links from the network cross our polygon.
 links = project.network.links.data
 inner_links = links[links.crosses(poly.boundary)].sort_index()
@@ -230,7 +227,8 @@ inside_nodes = nodes.sjoin(zones, how="inner").sort_index()
 inside_nodes.head()
 
 # %%
-# Here we filter those network links to graph links, dropping any dead ends and creating a `link_id, dir` multi-index.
+# Let's filter those network links to graph links, dropping any dead ends and creating a `link_id`,
+# `dir` multi-index.
 g = (
     graph.graph.set_index("link_id")
     .loc[inner_links.link_id]
@@ -241,50 +239,27 @@ g = (
 g.head()
 
 # %%
-# Sub-area visualisation
-# ``````````````````````
-
-# %%
-# Here we'll quickly visualise what out sub-area is looking like. We'll plot the polygon from our zoning system and the
-# links that it cuts.
-points = [(link_id, list(x.coords)) for link_id, x in zip(inner_links.link_id, inner_links.geometry)]
-subarea_layer = folium.FeatureGroup("Cut links")
-
-for link_id, line in points:
-    _ = folium.vector_layers.PolyLine(
-        [(x[1], x[0]) for x in line],
-        tooltip=f"link_id: {link_id}",
-        color="red",
-    ).add_to(subarea_layer)
-
-long, lat = project.conn.execute("select avg(xmin), avg(ymin) from idx_links_geometry").fetchone()
-
-map_osm = folium.Map(location=[lat, long], tiles="Cartodb Positron", zoom_start=12)
-
-subarea_zone.add_to(map_osm)
-
-subarea_layer.add_to(map_osm)
-_ = folium.LayerControl().add_to(map_osm)
-map_osm
+# Here we'll quickly visualise what our sub-area is looking like.
+# We'll plot the polygon from our zoning system and the links that it cuts.
+map = inner_links.explore(color="red", style_kwds={"weight": 4})
+subarea_zone.add_to(map)
+map
 
 # %%
 # Manual sub-area analysis
 # ~~~~~~~~~~~~~~~~~~~~~~~~
-
-# %%
-# In order to perform out analysis we need to know what OD pairs have flow that enters and/or exists our polygon. To do
-# so we perform a select link analysis on all links and pairs of links that cross the boundary. We create them as
-# tuples of tuples to make represent the select link AND sets.
+#
+# Here we'll construct and use the Route Choice class to generate our route sets,
+#
+# In order to perform out analysis we need to know what OD pairs have flow that enters and/or exists
+# our polygon. To do so we perform a select link analysis on all links and pairs of links that cross
+# the boundary. We create them as tuples of tuples to make represent the select link AND sets.
 edge_pairs = {x: (x,) for x in itertools.permutations(g.index, r=2)}
 single_edges = {x: ((x,),) for x in g.index}
 f"Created: {len(edge_pairs)} edge pairs from {len(single_edges)} edges"
 
 # %%
-# Here we'll construct and use the Route Choice class to generate our route sets
-from aequilibrae.paths import RouteChoice
-
-# %%
-# We'll re-prepare out graph quickly
+# Let's prepare our graph once again
 project.network.build_graphs()
 graph = project.network.graphs["c"]
 graph.network = graph.network.assign(utility=graph.network.distance * theta)
@@ -293,10 +268,11 @@ graph.set_graph("utility")
 graph.set_blocked_centroid_flows(False)
 
 # %%
-# This object construction might take a minute depending on the size of the graph due to the construction of the
-# compressed link to network link mapping that's required. This is a one time operation per graph and is cached. We
-# need to supply a Graph and an AequilibraeMatrix or DataFrame via the ``add_demand`` method, if demand is not provided
-# link loading cannot be preformed.
+# This object construction might take a minute depending on the size of the graph due to the
+# construction of the compressed link to network link mapping that's required. This is a one
+# time operation per graph and is cached. We need to supply a Graph and an AequilibraeMatrix
+# or DataFrame via the ``add_demand`` method, if demand is not provided link loading cannot
+# be preformed.
 rc = RouteChoice(graph)
 rc.add_demand(mat)
 
@@ -305,8 +281,9 @@ rc.add_demand(mat)
 rc.set_select_links(single_edges | edge_pairs)
 
 # %%
-# For the sake of demonstration we limit out demand matrix to a few OD pairs. This filter is also possible with the
-# automated approach, just edit the ``subarea.rc.demand.df`` DataFrame, however make sure the index remains intact.
+# For the sake of demonstration we limit out demand matrix to a few OD pairs. This filter is also
+# possible with the automated approach, just edit the ``subarea.rc.demand.df`` DataFrame, however
+# make sure the index remains intact.
 ods_pairs_of_interest = [
     (4, 39),
     (92, 37),
@@ -320,9 +297,8 @@ rc.demand.df
 
 # %%
 # Perform the assignment
-rc.set_choice_set_generation("link-penalisation", max_routes=5, penalty=1.02, store_results=False, seed=123)
+rc.set_choice_set_generation("lp", max_routes=3, penalty=1.02, store_results=False, seed=123)
 rc.execute(perform_assignment=True)
-
 
 # %%
 # We can visualise the current links loads
@@ -331,17 +307,17 @@ subarea_zone.add_to(map)
 map
 
 # %%
-# We'll pull out just OD matrix results as well we need it for the post-processing, we'll also convert the sparse
-# matrices to SciPy COO matrices.
+# We'll pull out just OD matrix results as well we need it for the post-processing, we'll also
+# convert the sparse matrices to SciPy COO matrices.
 sl_od = rc.get_select_link_od_matrix_results()
 edge_totals = {k: sl_od[k]["demand"].to_scipy() for k in single_edges}
 edge_pair_values = {k: sl_od[k]["demand"].to_scipy() for k in edge_pairs}
 
 # %%
-# For the post processing, we are interested in the demand of OD pairs that enter or exit the sub-area, or do both. For
-# the single enters and exists we can extract that information from the single link select link results. We also need to
-# map the links that cross the boundary to the origin/destination node and the node that appears on the outside of the
-# sub-area.
+# For the post processing, we are interested in the demand of OD pairs that enter or exit the
+# sub-area, or do both. For the single enters and exists we can extract that information from
+# the single link select link results. We also need to map the links that cross the boundary to
+# the origin/destination node and the node that appears on the outside of the sub-area.
 from collections import defaultdict
 
 entered = defaultdict(float)
@@ -361,7 +337,6 @@ for (link_id, dir), v in edge_totals.items():
             entered[graph.all_nodes[link.a_node], d] += load
         elif not o_inside and not d_inside:
             pass
-
 
 # %%
 # Here he have the load that entered the sub-area
@@ -388,8 +363,8 @@ for (l1, l2), v in edge_pair_values.items():
 through
 
 # %%
-# With these results we can construct a new demand matrix. Usually this would be now transplanted onto another network,
-# however for demonstration purposes we'll reuse the same network.
+# With these results we can construct a new demand matrix. Usually this would be now transplanted
+# onto another network, however for demonstration purposes we'll reuse the same network.
 demand = pd.DataFrame(
     list(entered.values()) + list(exited.values()) + list(through.values()),
     index=pd.MultiIndex.from_tuples(
@@ -410,7 +385,7 @@ new_centroids
 # Re-perform our assignment
 rc = RouteChoice(graph)
 rc.add_demand(demand)
-rc.set_choice_set_generation("link-penalisation", max_routes=5, penalty=1.02, store_results=False, seed=123)
+rc.set_choice_set_generation("lp", max_routes=3, penalty=1.02, store_results=False, seed=123)
 rc.execute(perform_assignment=True)
 
 # %%
@@ -418,3 +393,6 @@ rc.execute(perform_assignment=True)
 map = plot_results(rc.get_load_results()["demand"])
 subarea_zone.add_to(map)
 map
+
+# %%
+project.close()
