@@ -10,7 +10,7 @@ For more on this topic, see its `first publication <https://xl-optim.com/delauna
 
 We use the Sioux Falls example once again.
 """
-# %% 
+# %%
 # .. seealso::
 #     Several functions, methods, classes and modules are used in this example:
 #
@@ -19,10 +19,8 @@ We use the Sioux Falls example once again.
 # %%
 
 # Imports
-import pandas as pd
 from uuid import uuid4
 from os.path import join
-import sqlite3
 from tempfile import gettempdir
 from geopandas import read_postgis
 
@@ -60,9 +58,9 @@ results = project.results.get_results("delaunay_test").set_index("link_id")
 # Now we get the matrix we want and create the Delaunay Lines
 with project.db_connection_spatial as conn:
     links = read_postgis(
-        "Select link_id, st_asBinary(geometry) geometry from delaunay_network", 
-        conn, 
-        geom_col="geometry", 
+        "Select link_id, st_asBinary(geometry) geometry from delaunay_network",
+        conn,
+        geom_col="geometry",
         crs=4326
     )
     links.set_index("link_id", inplace=True)

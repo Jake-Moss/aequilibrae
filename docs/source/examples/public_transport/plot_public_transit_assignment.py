@@ -11,7 +11,7 @@ We use data from Coquimbo, a city in La Serena Metropolitan Area in Chile.
 """
 # %%
 # .. admonition:: References
-# 
+#
 #   * :doc:`../../public_transport`
 
 # %%
@@ -48,12 +48,12 @@ data = Transit(project)
 # %%
 # Graph building
 # --------------
-# Let's build the transit network. We'll disable ``outer_stop_transfers`` and ``walking_edges`` 
+# Let's build the transit network. We'll disable ``outer_stop_transfers`` and ``walking_edges``
 # because Coquimbo doesn't have any parent stations.
-# 
+#
 # For the OD connections we'll use the ``overlapping_regions`` method and create some accurate line geometry later.
-# Creating the graph should only take a moment. By default zoning information is pulled from the project network. 
-# If you have your own zoning information add it using ``graph.add_zones(zones)`` then ``graph.create_graph()``. 
+# Creating the graph should only take a moment. By default zoning information is pulled from the project network.
+# If you have your own zoning information add it using ``graph.add_zones(zones)`` then ``graph.create_graph()``.
 
 # %%
 graph = data.create_graph(with_outer_stop_transfers=False, with_walking_edges=False, blocking_centroid_flows=False, connector_method="overlapping_regions")
@@ -65,8 +65,8 @@ graph.vertices.drop(columns="geometry")
 graph.edges
 
 # %%
-# The graphs also also stored in the ``Transit.graphs`` dictionary. They are keyed by the 'period_id' they 
-# were created for. A graph for a different 'period_id' can be created by providing ``period_id=`` in the 
+# The graphs also also stored in the ``Transit.graphs`` dictionary. They are keyed by the 'period_id' they
+# were created for. A graph for a different 'period_id' can be created by providing ``period_id=`` in the
 # ``Transit.create_graph`` call. You can view previously created periods with the ``Periods`` object.
 periods = project.network.periods
 periods.data
@@ -77,9 +77,9 @@ periods.data
 project.network.build_graphs()
 
 # %%
-# Now we'll create the line strings for the access connectors, this step is optional but provides more accurate distance 
+# Now we'll create the line strings for the access connectors, this step is optional but provides more accurate distance
 # estimations and better looking geometry.
-# 
+#
 # Because Coquimbo doesn't have many walking edges we'll match onto the ``"c"`` graph.
 graph.create_line_geometry(method="connector project match", graph="c")
 
@@ -90,9 +90,9 @@ graph.create_line_geometry(method="connector project match", graph="c")
 data.save_graphs()
 
 # %%
-# We can reload the saved graphs with ``data.load``. 
+# We can reload the saved graphs with ``data.load``.
 # This will create new ``TransitGraphBuilder``\'s based on the 'period_id' of the saved graphs.
-# The graph configuration is stored in the 'transit_graph_config' table in 'project_database.sqlite' 
+# The graph configuration is stored in the 'transit_graph_config' table in 'project_database.sqlite'
 # as serialised JSON.
 data.load()
 
@@ -103,7 +103,7 @@ data.load()
 
 # %%
 # Links and nodes are stored in a similar manner to the 'project_database.sqlite' database.
-# 
+#
 # Reading back into AequilibraE
 # -----------------------------
 # You can create back in a particular graph via it's 'period_id'.
@@ -158,7 +158,7 @@ assig = TransitAssignment()
 
 assig.add_class(assigclass)
 
-# We need to tell AequilbraE where to find the appropriate fields we want to use,  
+# We need to tell AequilbraE where to find the appropriate fields we want to use,
 # as well as the assignment algorithm to use.
 assig.set_time_field("trav_time")
 assig.set_frequency_field("freq")
@@ -181,8 +181,8 @@ assig.results()
 # %%
 # Saving results
 # --------------
-# We'll be saving the results to another sqlite db called 'results_database.sqlite'. 
-# The 'results' table with 'project_database.sqlite' contains some metadata about each table in 
+# We'll be saving the results to another sqlite db called 'results_database.sqlite'.
+# The 'results' table with 'project_database.sqlite' contains some metadata about each table in
 # 'results_database.sqlite'.
 assig.save_results(table_name='hyperpath example')
 

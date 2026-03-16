@@ -37,7 +37,7 @@ nodes = project.network.nodes.data
 # And if you want to take a quick look in your GeoDataFrames, you can plot it!
 
 # links.plot()
- 
+
 # %%
 # Let's create copies of our link layers for each mode
 bike = links[links["modes"].str.contains("b")]

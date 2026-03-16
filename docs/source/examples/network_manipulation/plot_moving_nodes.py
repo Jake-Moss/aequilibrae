@@ -9,8 +9,8 @@ what happens to the links.
 """
 # %%
 # .. admonition:: References
-# 
-#   * :ref:`modifications_on_nodes_layer` 
+#
+#   * :ref:`modifications_on_nodes_layer`
 
 # %%
 # .. seealso::
@@ -50,7 +50,7 @@ node.save()
 
 # %%
 # If you want to show the path in Python.
-# 
+#
 # We do NOT recommend this, though.... It is very slow for real networks.
 
 # Let's refresh the links in memory for usage

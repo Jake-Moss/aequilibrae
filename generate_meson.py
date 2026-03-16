@@ -1,5 +1,4 @@
 import os
-import pathlib
 
 root_dir = "aequilibrae"
 
@@ -17,7 +16,7 @@ ext_modules = {
 
 
 def clean_old_mesons(path):
-    for root, dirs, files in os.walk(path):
+    for root, _dirs, files in os.walk(path):
         if "meson.build" in files:
             os.remove(os.path.join(root, "meson.build"))
 
@@ -28,7 +27,7 @@ def get_subdirs(path):
         if entry.is_dir() and entry.name != "__pycache__" and not entry.name.endswith("egg-info"):
             # Check if subdir actually has anything useful
             has_stuff = False
-            for r, d, f in os.walk(entry.path):
+            for _r, _d, f in os.walk(entry.path):
                 if any(x.endswith((".py", ".pyx", ".pxd", ".pxi", ".sql", ".sqlite", ".zip", ".yml")) for x in f):
                     has_stuff = True
                     break

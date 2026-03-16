@@ -53,7 +53,7 @@ from aequilibrae.paths import TrafficAssignment, TrafficClass
 
 # We build all graphs
 project.network.build_graphs()
-# We get warnings that several fields in the project are filled with NaNs. 
+# We get warnings that several fields in the project are filled with NaNs.
 # This is true, but we won't use those fields.
 
 # We grab the graph for cars
@@ -91,7 +91,7 @@ assig = TrafficAssignment()
 assig.add_class(assigclass)
 
 # Then we set these parameters, which an only be configured after adding one class to the assignment
-assig.set_vdf("BPR")  # This is not case-sensitive 
+assig.set_vdf("BPR")  # This is not case-sensitive
 
 # Then we set the volume delay function and its parameters
 assig.set_vdf_parameters({"alpha": "b", "beta": "power"})
@@ -193,7 +193,7 @@ intrazonals *= 0.75
 np.fill_diagonal(imped.matrix_view, intrazonals)
 
 # %%
-# Since we are working with an OMX file, we cannot overwrite a matrix on disk. 
+# Since we are working with an OMX file, we cannot overwrite a matrix on disk.
 # So let's give it a new name to save.
 imped.save(names=["final_time_with_intrazonals"])
 
@@ -236,7 +236,7 @@ from aequilibrae.distribution import Ipf, GravityApplication, SyntheticGravityMo
 # %%
 # Compute future vectors
 # ~~~~~~~~~~~~~~~~~~~~~~
-# 
+#
 # First thing to do is to compute the future vectors from our matrix.
 origins = np.sum(demand.matrix_view, axis=1)
 destinations = np.sum(demand.matrix_view, axis=0)
@@ -271,7 +271,7 @@ ipf.save_to_project(name="demand_ipfd_omx", file_name="demand_ipfd.omx")
 # %%
 # Impedance
 # ~~~~~~~~~
-# 
+#
 # Let's get the base-year assignment skim for car we created before and prepare it for computation
 imped = proj_matrices.get_matrix("base_year_assignment_skims_car")
 imped.computational_view(["final_time_with_intrazonals"])
@@ -359,11 +359,11 @@ select_links = {
 
 # %%
 # .. note::
-# 
+#
 #    As we are executing the select link analysis on a particular ``TrafficClass``, we should set the
 #    links we want to analyze. The input is a dictionary with string as keys and a list of tuples as
-#    values, so that each entry represents a separate set of selected links to compute. 
-#    
+#    values, so that each entry represents a separate set of selected links to compute.
+#
 #    ``select_link_dict = {"set_name": [(link_id1, direction1), ..., (link_id, direction)]}``
 #
 #    The string name will name the set of links, and the list of tuples is the list of selected links
@@ -388,9 +388,9 @@ assig.save_select_link_results("select_link_analysis")
 # .. note::
 #
 #    Say we just want to save our select link flows, we can call: ``assig.save_select_link_flows("just_flows")``
-# 
+#
 #    Or if we just want the select link matrices: ``assig.save_select_link_matrices("just_matrices")``
-# 
+#
 #    Internally, the ``save_select_link_results`` calls both of these methods at once.
 
 # %%

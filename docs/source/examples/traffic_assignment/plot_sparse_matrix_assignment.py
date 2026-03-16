@@ -52,7 +52,7 @@ logger = project.logger
 # %%
 # We build all graphs
 project.network.build_graphs()
-# We get warnings that several fields in the project are filled with NaNs. 
+# We get warnings that several fields in the project are filled with NaNs.
 # This is true, but we won't use those fields.
 
 # We grab the graph for cars
@@ -87,7 +87,7 @@ assig = TrafficAssignment()
 assig.add_class(assigclass)
 
 # Then we set these parameters, which an only be configured after adding one class to the assignment
-assig.set_vdf("BPR")  # This is not case-sensitive 
+assig.set_vdf("BPR")  # This is not case-sensitive
 
 # Then we set the volume delay function and its parameters
 assig.set_vdf_parameters({"alpha": "b", "beta": "power"})

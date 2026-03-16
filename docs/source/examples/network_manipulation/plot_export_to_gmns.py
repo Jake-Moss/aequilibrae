@@ -11,8 +11,8 @@ in the GMNS repository on GitHub: https://github.com/zephyr-data-specs/GMNS
 """
 # %%
 # .. admonition:: References
-# 
-#   * :ref:`aequilibrae_to_gmns` 
+#
+#   * :ref:`aequilibrae_to_gmns`
 
 # %%
 # .. seealso::

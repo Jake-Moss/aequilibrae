@@ -4,11 +4,11 @@
 Route Choice with sub-area analysis
 ===================================
 
-In this example, we show how to perform sub-area analysis using route choice assignment, 
+In this example, we show how to perform sub-area analysis using route choice assignment,
 for a city in La Serena Metropolitan Area in Chile.
 
 .. admonition:: References
- 
+
    * :doc:`../../route_choice`
 
 .. seealso::

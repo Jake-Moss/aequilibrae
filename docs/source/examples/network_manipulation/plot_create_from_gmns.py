@@ -22,13 +22,13 @@ Create project from GMNS
 ========================
 
 In this example, we import a simple network in GMNS format.
-The source files of this network are publicly available in the 
+The source files of this network are publicly available in the
 `GMNS GitHub repository <https://github.com/zephyr-data-specs/GMNS>`_ itself.
 """
 # %%
 # .. admonition:: References
-# 
-#   * :ref:`importing_from_gmns_file` 
+#
+#   * :ref:`importing_from_gmns_file`
 
 # %%
 # .. seealso::

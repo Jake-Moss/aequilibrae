@@ -105,7 +105,7 @@ for name, func, delta_func, par1, par2, description in vdfs:
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4.5))
     function_values = function_apply(func, voc_range, par1, par2)
     derivative_values = derivative_apply(delta_func, voc_range, par1, par2)
-    
+
     # Left plot: Function values
     ax1.plot(voc_range, function_values, linewidth=2.5, color='#1f77b4')
     ax1.axvline(x=1.0, color='red', linestyle=':', linewidth=1.5, alpha=0.7)
@@ -116,7 +116,7 @@ for name, func, delta_func, par1, par2, description in vdfs:
     ax1.grid(True, alpha=0.3, linestyle='--')
     ax1.set_xlim(0, 3)
     ax1.text(1.05, ax1.get_ylim()[1] * 0.665, 'Capacity', fontsize=9, color='red', rotation=90)
-    
+
     # Right plot: Derivative (marginal cost)
     ax2.plot(voc_range, derivative_values, linewidth=2.5, color='#ff7f0e')
     ax2.axvline(x=1.0, color='red', linestyle=':', linewidth=1.5, alpha=0.7)
@@ -127,10 +127,10 @@ for name, func, delta_func, par1, par2, description in vdfs:
     ax2.grid(True, alpha=0.3, linestyle='--')
     ax2.set_xlim(0, 3)
     ax2.text(1.05, ax2.get_ylim()[1] * 0.665, 'Capacity', fontsize=9, color='red', rotation=90)
-    
+
     # Add formula and description
     fig.suptitle(f'{name} - {description}', fontsize=10, y=0.98)
-    
+
     plt.tight_layout()
     filename = f'vdf_{name.lower()}_detail.png'
     plt.savefig(os.path.join(output_dir, filename), dpi=150, bbox_inches='tight')

@@ -26,9 +26,7 @@ from uuid import uuid4
 from tempfile import gettempdir
 from os.path import join
 
-from aequilibrae.project.tools import MigrationManager
 from aequilibrae.utils.create_example import create_example
-from aequilibrae.utils.spatialite_utils import connect_spatialite
 
 # %%
 

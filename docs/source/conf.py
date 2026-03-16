@@ -16,9 +16,7 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from sphinx_gallery.sorting import ExplicitOrder
 import pkg_resources
-import sphinx
 
 project_dir = Path(__file__).parent.parent.parent
 if str(project_dir) not in sys.path:

@@ -122,7 +122,7 @@ islands = pd.concat(islands)
 islands.to_csv(join(fldr, "island_outputs_complete.csv"), index=False)
 
 # %%
-# If you join the ``node_id`` field in the CSV file generated above with the ``a_node`` or ``b_node`` 
+# If you join the ``node_id`` field in the CSV file generated above with the ``a_node`` or ``b_node``
 # fields in the links table, you will have the corresponding links in each disjoint island found.
 
 # %%

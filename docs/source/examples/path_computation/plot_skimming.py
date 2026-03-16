@@ -81,11 +81,11 @@ project.network.graphs.keys()
 # let's say we want to minimize the distance
 graph.set_graph("distance")
 
-# And will skim distance while we are at it, other fields like ``free_flow_time`` or ``travel_time`` 
+# And will skim distance while we are at it, other fields like ``free_flow_time`` or ``travel_time``
 # can be added here as well
 graph.set_skimming(["distance"])
 
-# But let's say we only want a skim matrix for nodes 28-40, and 49-60 (inclusive), 
+# But let's say we only want a skim matrix for nodes 28-40, and 49-60 (inclusive),
 # these happen to be a selection of western centroids.
 graph.prepare_graph(np.array(list(range(28, 41)) + list(range(49, 91))))
 
@@ -94,7 +94,7 @@ graph.prepare_graph(np.array(list(range(28, 41)) + list(range(49, 91))))
 skm = graph.compute_skims()
 
 # %%
-# Building network skims directly from the graph is more straightforward, though  
+# Building network skims directly from the graph is more straightforward, though
 # we could alternatively use the class ``NetworkSkimming`` to achieve the same result.
 
 # from aequilibrae.paths import NetworkSkimming

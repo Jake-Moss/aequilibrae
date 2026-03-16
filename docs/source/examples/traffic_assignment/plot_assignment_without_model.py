@@ -10,7 +10,7 @@ We are using `Sioux Falls data <https://github.com/bstabler/TransportationNetwor
 """
 # %%
 # .. admonition:: References
-# 
+#
 #   * :doc:`../../static_traffic_assignment`
 
 # %%
@@ -19,7 +19,7 @@ We are using `Sioux Falls data <https://github.com/bstabler/TransportationNetwor
 #
 #     * :func:`aequilibrae.paths.graph`
 #     * :func:`aequilibrae.paths.traffic_class.TrafficClass`
-#     * :func:`aequilibrae.paths.traffic_assignment.TrafficAssignment` 
+#     * :func:`aequilibrae.paths.traffic_assignment.TrafficAssignment`
 #     * :func:`aequilibrae.matrix.aequilibrae_matrix`
 
 # %%
@@ -49,8 +49,8 @@ geometry_file = "https://raw.githubusercontent.com/bstabler/TransportationNetwor
 # Let's use a temporary folder to store our data
 folder = os.path.join(gettempdir(), uuid4().hex)
 
-# %% 
-# First we load our demand file. This file has three columns: O, D, and Ton. 
+# %%
+# First we load our demand file. This file has three columns: O, D, and Ton.
 # O and D stand for origin and destination, respectively, and Ton is the demand of each
 # OD pair.
 dem = pd.read_csv(demand_file)
@@ -92,7 +92,7 @@ network["link_id"] = network.index + 1
 network = network.astype({"a_node":"int64", "b_node": "int64"})
 
 # %%
-# Now we'll import the geometry (as lon/lat) for our network, this is required if you plan to 
+# Now we'll import the geometry (as lon/lat) for our network, this is required if you plan to
 # use the `A*` path finding, otherwise it can safely be skipped.
 geom = pd.read_csv(geometry_file, skiprows=1, sep="\t", lineterminator=";", header=None)
 geom.columns = ["newline", "lon", "lat", "terminator"]
@@ -101,7 +101,7 @@ geom["node_id"] = geom.index + 1
 geom = geom.astype({"node_id": "int64", "lon": "float64", "lat": "float64"}).set_index("node_id")
 
 # %%
-# Let's build our Graph! In case you're in doubt about AequilibraE Graph, 
+# Let's build our Graph! In case you're in doubt about AequilibraE Graph,
 # :ref:`click here <aequilibrae-graphs>` to read more about it.
 
 # %%

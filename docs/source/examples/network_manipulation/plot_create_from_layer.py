@@ -13,7 +13,7 @@ We use Folium to visualize the resulting network.
 
 # %%
 # .. admonition:: References
-# 
+#
 #   * :doc:`../../aequilibrae_project/project_components`
 
 # %%
@@ -21,9 +21,9 @@ We use Folium to visualize the resulting network.
 #     Several functions, methods, classes and modules are used in this example:
 #
 #     * :func:`aequilibrae.project.network.links`
-#     * :func:`aequilibrae.project.network.nodes` 
+#     * :func:`aequilibrae.project.network.nodes`
 #     * :func:`aequilibrae.project.network.modes`
-#     * :func:`aequilibrae.project.network.link_types` 
+#     * :func:`aequilibrae.project.network.link_types`
 
 # %%
 
@@ -133,7 +133,7 @@ links.refresh_fields()
 
 # %%
 # We can now add all links to the project!
-for idx, record in df.iterrows():
+for _idx, record in df.iterrows():
     new_link = links.new()
 
     # Now let's add all the fields we had

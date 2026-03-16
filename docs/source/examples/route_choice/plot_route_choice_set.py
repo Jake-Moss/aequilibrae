@@ -9,7 +9,7 @@ a city in La Serena Metropolitan Area in Chile.
 """
 # %%
 # .. admonition:: References
-# 
+#
 #   * :doc:`../../route_choice`
 
 # %%
@@ -69,15 +69,15 @@ graph.prepare_graph(np.array(nodes_of_interest))
 # Here we'll construct and use the Route Choice class to generate our route sets
 from aequilibrae.paths import RouteChoice
 
-# %% 
+# %%
 # This object construct might take a minute depending on the size of the graph due to the construction of the
 # compressed link to network link mapping that's required. This is a one time operation per graph and is cached.
 rc = RouteChoice(graph)
 
 # %%
 # It is highly recommended to set either ``max_routes`` or ``max_depth`` to prevent runaway results.
-# 
-# We'll also set a 5% penalty (``penalty=1.05``), which is likely a little too large, but it creates routes that are 
+#
+# We'll also set a 5% penalty (``penalty=1.05``), which is likely a little too large, but it creates routes that are
 # distinct enough to make this simple example more interesting.
 rc.set_choice_set_generation("bfsle", max_routes=5, penalty=1.05)
 rc.prepare(od_pairs_of_interest)
@@ -96,7 +96,7 @@ choice_set = rc.get_results()
 # rc.execute_from_path_files(path)
 
 # %%
-# Or if we had externally computed route choice sets, we can use AequilibraEs assignment procedures by 
+# Or if we had externally computed route choice sets, we can use AequilibraEs assignment procedures by
 # loading them with the ``execute_from_pandas`` method.
 
 # rc.execute_from_pandas(path_files_df)

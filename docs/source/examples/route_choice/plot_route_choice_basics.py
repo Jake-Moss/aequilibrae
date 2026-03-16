@@ -9,7 +9,7 @@ Serena Metropolitan Area in Chile.
 """
 # %%
 # .. admonition:: References
-# 
+#
 #   * :doc:`../../route_choice`
 
 # %%
@@ -124,7 +124,7 @@ def plot_results(link_loads):
     links = project.network.links.data
     loaded_links = links.merge(link_loads, on="link_id", how="inner")
 
-    loads_lyr = folium.FeatureGroup("link_loads")
+    folium.FeatureGroup("link_loads")
 
     # Maximum thickness we would like is probably a 10, so let's make sure we don't go over that
     factor = 10 / max_load
@@ -191,7 +191,7 @@ res.head()
 # Since we provided a matrix initially we can also perform link loading based on our assignment results.
 rc.get_load_results()
 
-# %% 
+# %%
 # We can plot these as well
 plot_results(rc.get_load_results())
 

@@ -11,7 +11,7 @@ Let's consider that you have an OD-matrix, the future production and future attr
 
 *How would your trip distribution matrix using IPF look like?*
 
-The data used in this example comes from Table 5.6 in 
+The data used in this example comes from Table 5.6 in
 `Ortúzar & Willumsen (2011) <https://www.wiley.com/en-us/Modelling+Transport%2C+4th+Edition-p-9780470760390>`_.
 
 """

@@ -6,8 +6,8 @@ Graph from arbitrary data
 
 In this example, we demonstrate how to create an AequilibraE Graph from an arbitrary network.
 
-We are using 
-`Sioux Falls data <https://github.com/bstabler/TransportationNetworks/tree/master/SiouxFalls>`_, 
+We are using
+`Sioux Falls data <https://github.com/bstabler/TransportationNetworks/tree/master/SiouxFalls>`_,
 from TNTP.
 """
 
@@ -38,7 +38,7 @@ net = pd.read_csv(net_file, skiprows=8, sep="\t", lineterminator="\n", usecols=n
 
 # %%
 # The Graph object requires several default fields: link_id, a_node, b_node, and direction.
-# 
+#
 # We need to manipulate the data to add the missing fields (link_id and direction) and
 # rename the node columns accordingly.
 net.insert(0, "link_id", np.arange(1, net.shape[0] + 1))
@@ -83,7 +83,7 @@ res.path
 # %%
 # For path computation, when we call the method ``graph.compute_path(1, 17)``, we are calling the class
 # ``PathComputation`` and storing its results into a variable.
-# 
+#
 # Notice that other methods related to path computation, such as ``milepost`` can also be used with
 # ``res``.
 

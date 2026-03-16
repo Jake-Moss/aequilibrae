@@ -4,7 +4,7 @@
 Import GTFS
 ===========
 
-In this example, we import a GTFS feed to our model and perform map matching. 
+In this example, we import a GTFS feed to our model and perform map matching.
 
 We use data from Coquimbo, a city in La Serena Metropolitan Area in Chile.
 """

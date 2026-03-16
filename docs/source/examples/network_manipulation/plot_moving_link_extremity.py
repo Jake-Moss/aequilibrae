@@ -9,8 +9,8 @@ and see what happens to the network.
 """
 # %%
 # .. admonition:: References
-# 
-#   * :ref:`modifications_on_links_layer` 
+#
+#   * :ref:`modifications_on_links_layer`
 
 # %%
 # .. seealso::

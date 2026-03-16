@@ -9,8 +9,8 @@ in the database equal. Distance is proportionally computed automatically in the 
 """
 # %%
 # .. admonition:: References
-# 
-#   * :ref:`modifications_on_links_layer` 
+#
+#   * :ref:`modifications_on_links_layer`
 
 # %%
 # .. seealso::

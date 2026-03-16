@@ -4,15 +4,15 @@
 Create project from OpenStreetMap
 =================================
 
-In this example, we show how to create an empty project and populate it with a network from 
+In this example, we show how to create an empty project and populate it with a network from
 OpenStreetMap.
 
 This time we will use GeoPandas to visualize the network.
 """
 # %%
 # .. admonition:: References
-# 
-#   * :ref:`importing_from_osm` 
+#
+#   * :ref:`importing_from_osm`
 
 # %%
 # .. seealso::
@@ -39,7 +39,7 @@ project = Project()
 project.new(fldr)
 
 # %%
-# Now we can download the network from any place in the world (as long as you have memory for 
+# Now we can download the network from any place in the world (as long as you have memory for
 # all the download and data wrangling that will be done).
 
 # %%
