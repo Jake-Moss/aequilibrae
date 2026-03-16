@@ -137,7 +137,7 @@ links = project.network.links.data.set_index("link_id")
 links = links.loc[res.path]
 
 # %%
-links.explore(color="blue", style_kwds={'weight':5})
+links.explore(color="blue", style_kwds={"weight": 5})
 
 # %%
 project.close()

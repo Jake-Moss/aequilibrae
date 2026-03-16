@@ -53,7 +53,9 @@ import folium
 # We load the example file from the GMNS GitHub repository
 link_file = "https://raw.githubusercontent.com/zephyr-data-specs/GMNS/main/examples/Arlington_Signals/link.csv"
 node_file = "https://raw.githubusercontent.com/zephyr-data-specs/GMNS/main/examples/Arlington_Signals/node.csv"
-use_group_file = "https://raw.githubusercontent.com/zephyr-data-specs/GMNS/main/examples/Arlington_Signals/use_group.csv"
+use_group_file = (
+    "https://raw.githubusercontent.com/zephyr-data-specs/GMNS/main/examples/Arlington_Signals/use_group.csv"
+)
 
 # %%
 
@@ -100,7 +102,7 @@ nodes = project.network.nodes.data
 map = links.explore(color="black", style_kwds={"weight": 2}, tool_tip="link_type", name="links")
 map = nodes.explore(m=map, color="red", style_kwds={"radius": 5, "fillOpacity": 1.0}, name="nodes")
 
-folium.LayerControl().add_to(map) # Add a layer control button to our map
+folium.LayerControl().add_to(map)  # Add a layer control button to our map
 map
 
 # %%

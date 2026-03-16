@@ -116,9 +116,9 @@ mat.computational_view()
 # Before dive into the Route Choice class, let's define a function to plot assignment results.
 import folium
 
+
 # %%
 def plot_results(link_loads):
-
     link_loads = link_loads[link_loads["demand_tot"] > 0]
     max_load = link_loads["demand_tot"].max()
     links = project.network.links.data
@@ -137,6 +137,7 @@ def plot_results(link_loads):
             }
         },
     )
+
 
 # %%
 # Route Choice class

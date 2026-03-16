@@ -60,7 +60,7 @@ mode = "c"
 
 # We get an arbitrary node to set as centroid and allow for the construction of graphs
 nodes = project.network.nodes
-centroid_count = nodes.data.query('is_centroid == 1').shape[0]
+centroid_count = nodes.data.query("is_centroid == 1").shape[0]
 
 if centroid_count == 0:
     arbitrary_node = nodes.data["node_id"][0]

@@ -58,10 +58,7 @@ results = project.results.get_results("delaunay_test").set_index("link_id")
 # Now we get the matrix we want and create the Delaunay Lines
 with project.db_connection_spatial as conn:
     links = read_postgis(
-        "Select link_id, st_asBinary(geometry) geometry from delaunay_network",
-        conn,
-        geom_col="geometry",
-        crs=4326
+        "Select link_id, st_asBinary(geometry) geometry from delaunay_network", conn, geom_col="geometry", crs=4326
     )
     links.set_index("link_id", inplace=True)
 

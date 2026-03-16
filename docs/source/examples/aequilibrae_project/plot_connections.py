@@ -58,7 +58,9 @@ matrices
 # %%
 # We encourage using spatial connections only when handling spatial data.
 with project.db_connection_spatial as conn:
-    nodes = gpd.read_postgis("SELECT zone_id, ST_AsBinary(geometry) geom FROM zones;", con=conn, geom_col="geom", crs=4326)
+    nodes = gpd.read_postgis(
+        "SELECT zone_id, ST_AsBinary(geometry) geom FROM zones;", con=conn, geom_col="geom", crs=4326
+    )
 
 # %%
 nodes.head()

@@ -31,9 +31,7 @@ class CreateTablesSRC:
             *Path(realpath(__file__)).parts[:-1],
             f"../aequilibrae/project/database_specification/{self.__folder}/tables",
         )
-        self.doc_path = str(
-            Path(realpath(__file__)).parent / "source" / "aequilibrae_project" / tgt_fldr
-        )
+        self.doc_path = str(Path(realpath(__file__)).parent / "source" / "aequilibrae_project" / tgt_fldr)
 
         Path(join(self.doc_path, self.stub)).mkdir(exist_ok=True, parents=True)
 
@@ -51,7 +49,7 @@ class CreateTablesSRC:
             reference = f".. _{table_name}_{self.__folder}_data_model:\n"
 
             # Title of the page
-            title = f'**{table_name.replace("_", " ")}** table structure'
+            title = f"**{table_name.replace('_', ' ')}** table structure"
             txt = [reference, title, "=" * len(title), ""]
 
             docstrings = self.__get_docstrings(table_name)

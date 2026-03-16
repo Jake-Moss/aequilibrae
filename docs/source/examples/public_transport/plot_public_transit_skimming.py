@@ -66,7 +66,7 @@ graph = data.create_graph(
     with_outer_stop_transfers=False,
     with_walking_edges=False,
     blocking_centroid_flows=False,
-    connector_method="overlapping_regions"
+    connector_method="overlapping_regions",
 )
 
 # %%
@@ -89,7 +89,7 @@ transit_graph = graph_db.to_transit_graph()
 # Mock demand matrix
 zones = len(transit_graph.centroids)
 mat = AequilibraeMatrix()
-mat.create_empty(zones=zones, matrix_names=['pt'], memory_only=True)
+mat.create_empty(zones=zones, matrix_names=["pt"], memory_only=True)
 mat.index = transit_graph.centroids[:]
 mat.matrices[:, :, 0] = np.full((zones, zones), 1.0)
 mat.computational_view()
@@ -125,7 +125,7 @@ assig.get_skim_results()["pt"].matrix["boardings"].sum()
 # Saving results
 # --------------
 # We'll be saving the skimming results.
-assig.save_results(table_name='hyperpath example')
+assig.save_results(table_name="hyperpath example")
 
 # %%
 # Wrapping up

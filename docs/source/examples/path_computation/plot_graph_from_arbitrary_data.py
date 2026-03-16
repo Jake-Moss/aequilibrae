@@ -62,10 +62,10 @@ graph.prepare_graph(np.arange(1, 25))  # sets the centroids for which we will pe
 
 graph.set_graph("length")  # sets the cost field for path computation
 
-graph.set_skimming(["length", "free_flow_time"]) # sets the skims to be computed
+graph.set_skimming(["length", "free_flow_time"])  # sets the skims to be computed
 
 graph.set_blocked_centroid_flows(False)  # we don't block flows through centroids because all nodes
-                                         # in the Sioux Falls network are centroids
+# in the Sioux Falls network are centroids
 
 # %%
 # Two of AequilibraE's new features consist in directly computing path or skims.

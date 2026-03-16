@@ -68,7 +68,6 @@ extensions = [
 ]
 
 
-
 # Change plot_gallery to True to start building examples again
 sphinx_gallery_conf = {
     "examples_dirs": ["examples"],  # path to your example scripts

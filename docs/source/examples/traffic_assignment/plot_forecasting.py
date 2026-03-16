@@ -135,6 +135,7 @@ assig.save_skims("base_year_assignment_skims", which_ones="all", format="omx")
 from math import log10, floor
 import matplotlib.pyplot as plt
 
+
 # %%
 def plot_tlfd(demand, skim, name):
     plt.clf()
@@ -152,6 +153,7 @@ def plot_tlfd(demand, skim, name):
     plt.ylabel("Probability")
     plt.title(f"Trip-length frequency distribution for {name}")
     return plt
+
 
 # %%
 # Calibration
@@ -246,7 +248,7 @@ orig = origins * (1 + np.random.rand(origins.shape[0]) / 10)
 dest = destinations * (1 + np.random.rand(origins.shape[0]) / 10)
 dest *= orig.sum() / dest.sum()
 
-vectors = pd.DataFrame({"origins":orig, "destinations":dest}, index=demand.index[:])
+vectors = pd.DataFrame({"origins": orig, "destinations": dest}, index=demand.index[:])
 # %%
 # IPF for the future vectors
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~

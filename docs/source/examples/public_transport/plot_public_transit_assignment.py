@@ -56,7 +56,12 @@ data = Transit(project)
 # If you have your own zoning information add it using ``graph.add_zones(zones)`` then ``graph.create_graph()``.
 
 # %%
-graph = data.create_graph(with_outer_stop_transfers=False, with_walking_edges=False, blocking_centroid_flows=False, connector_method="overlapping_regions")
+graph = data.create_graph(
+    with_outer_stop_transfers=False,
+    with_walking_edges=False,
+    blocking_centroid_flows=False,
+    connector_method="overlapping_regions",
+)
 
 # We drop geometry here for the sake of display.
 graph.vertices.drop(columns="geometry")
@@ -134,12 +139,10 @@ from aequilibrae.matrix import AequilibraeMatrix
 # %%
 zones_in_the_model = len(transit_graph.centroids)
 
-names_list = ['pt']
+names_list = ["pt"]
 
 mat = AequilibraeMatrix()
-mat.create_empty(zones=zones_in_the_model,
-                 matrix_names=names_list,
-                 memory_only=True)
+mat.create_empty(zones=zones_in_the_model, matrix_names=names_list, memory_only=True)
 mat.index = transit_graph.centroids[:]
 mat.matrices[:, :, 0] = np.full((zones_in_the_model, zones_in_the_model), 1.0)
 mat.computational_view()
@@ -184,7 +187,7 @@ assig.results()
 # We'll be saving the results to another sqlite db called 'results_database.sqlite'.
 # The 'results' table with 'project_database.sqlite' contains some metadata about each table in
 # 'results_database.sqlite'.
-assig.save_results(table_name='hyperpath example')
+assig.save_results(table_name="hyperpath example")
 
 # %%
 # Wrapping up

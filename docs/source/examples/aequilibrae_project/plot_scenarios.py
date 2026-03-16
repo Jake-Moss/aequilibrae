@@ -81,7 +81,9 @@ print(f"This scenario has {len(project.network.links.data)} links")
 
 # Modify the network
 with project.db_connection as conn:
-    conn.execute("UPDATE links SET capacity_ab=capacity_ab/2, capacity_ba=capacity_ba/2 WHERE link_id > 20 AND link_id < 50")
+    conn.execute(
+        "UPDATE links SET capacity_ab=capacity_ab/2, capacity_ba=capacity_ba/2 WHERE link_id > 20 AND link_id < 50"
+    )
 
 # %%
 # Let's perform a traffic assignment in this scenario with lowered capacity
@@ -155,7 +157,7 @@ project.use_scenario("root")
 final_scenarios = project.list_scenarios()
 print("\nFinal scenario summary:")
 for _, scenario in final_scenarios.iterrows():
-    project.use_scenario(scenario['scenario_name'])
+    project.use_scenario(scenario["scenario_name"])
     link_count = len(project.network.links.data)
     result_count = len(project.results.list())
     print(f"  {scenario['scenario_name']}: {link_count} links, {result_count} results")

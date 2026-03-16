@@ -41,9 +41,13 @@ from aequilibrae.paths.traffic_class import TrafficClass
 # We load the example file from the GMNS GitHub repository
 net_file = "https://raw.githubusercontent.com/bstabler/TransportationNetworks/master/SiouxFalls/SiouxFalls_net.tntp"
 
-demand_file = "https://raw.githubusercontent.com/bstabler/TransportationNetworks/master/SiouxFalls/CSV-data/SiouxFalls_od.csv"
+demand_file = (
+    "https://raw.githubusercontent.com/bstabler/TransportationNetworks/master/SiouxFalls/CSV-data/SiouxFalls_od.csv"
+)
 
-geometry_file = "https://raw.githubusercontent.com/bstabler/TransportationNetworks/master/SiouxFalls/SiouxFalls_node.tntp"
+geometry_file = (
+    "https://raw.githubusercontent.com/bstabler/TransportationNetworks/master/SiouxFalls/SiouxFalls_node.tntp"
+)
 
 # %%
 # Let's use a temporary folder to store our data
@@ -62,18 +66,16 @@ index = np.arange(zones) + 1
 # would be a 24x24 matrix), we must create our matrix.
 mtx = np.zeros(shape=(zones, zones))
 for element in dem.to_records(index=False):
-    mtx[element[0]-1][element[1]-1] = element[2]
+    mtx[element[0] - 1][element[1] - 1] = element[2]
 
 # %%
 # Now let's create an AequilibraE Matrix with out data
 aemfile = os.path.join(folder, "demand.aem")
 aem = AequilibraeMatrix()
-kwargs = {'file_name': aemfile,
-          'zones': zones,
-          'matrix_names': ['matrix']}
+kwargs = {"file_name": aemfile, "zones": zones, "matrix_names": ["matrix"]}
 
 aem.create_empty(**kwargs)
-aem.matrix['matrix'][:,:] = mtx[:,:]
+aem.matrix["matrix"][:, :] = mtx[:, :]
 aem.index[:] = index[:]
 
 # %%
@@ -81,15 +83,28 @@ aem.index[:] = index[:]
 # we should do these manipulations.
 net = pd.read_csv(net_file, skiprows=2, sep="\t", lineterminator=";", header=None)
 
-net.columns = ["newline", "a_node", "b_node", "capacity", "length", "free_flow_time", "b", "power", "speed", "toll", "link_type", "terminator"]
+net.columns = [
+    "newline",
+    "a_node",
+    "b_node",
+    "capacity",
+    "length",
+    "free_flow_time",
+    "b",
+    "power",
+    "speed",
+    "toll",
+    "link_type",
+    "terminator",
+]
 
 net.drop(columns=["newline", "terminator"], index=[76], inplace=True)
 
 # %%
-network = net[['a_node', 'b_node', "capacity", 'free_flow_time', "b", "power"]]
+network = net[["a_node", "b_node", "capacity", "free_flow_time", "b", "power"]]
 network = network.assign(direction=1)
 network["link_id"] = network.index + 1
-network = network.astype({"a_node":"int64", "b_node": "int64"})
+network = network.astype({"a_node": "int64", "b_node": "int64"})
 
 # %%
 # Now we'll import the geometry (as lon/lat) for our network, this is required if you plan to
@@ -106,9 +121,9 @@ geom = geom.astype({"node_id": "int64", "lon": "float64", "lat": "float64"}).set
 
 # %%
 g = Graph()
-g.cost = network['free_flow_time'].values
-g.capacity = network['capacity'].values
-g.free_flow_time = network['free_flow_time'].values
+g.cost = network["free_flow_time"].values
+g.capacity = network["capacity"].values
+g.free_flow_time = network["free_flow_time"].values
 
 g.network = network
 g.prepare_graph(index)

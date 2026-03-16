@@ -57,6 +57,7 @@ import shapely.wkb
 
 from aequilibrae.utils.create_example import create_example, list_examples
 from aequilibrae.utils.aeq_signal import simple_progress, SIGNAL
+
 s = SIGNAL(object)
 
 # sphinx_gallery_thumbnail_path = "../source/_images/plot_create_zoning.png"

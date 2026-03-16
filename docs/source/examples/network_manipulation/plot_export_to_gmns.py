@@ -66,7 +66,7 @@ nodes = gpd.GeoDataFrame(nodes, geometry=gpd.GeoSeries.from_xy(nodes["x_coord"],
 map = links.explore(color="black", style_kwds={"weight": 2}, tool_tip="link_type", name="links")
 map = nodes.explore(m=map, color="red", style_kwds={"radius": 5, "fillOpacity": 1.0}, name="nodes")
 
-folium.LayerControl().add_to(map) # Add a layer control button to our map
+folium.LayerControl().add_to(map)  # Add a layer control button to our map
 map
 # %%
 project.close()
