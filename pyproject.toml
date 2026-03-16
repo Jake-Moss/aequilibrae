@@ -85,44 +85,15 @@ aeq-sim = "aequilibrae.utils.simwrapper.generate_simwrapper_config:main"
 [tool.ruff]
 lint.select = ["B", "C", "E", "F", "W"]
 lint.ignore = ["B017"]
-exclude = [
-    ".idea",
-    "__pycache__",
-    "sphinx",
-    ".ipynb_checkpoints",
-    "aequilibrae.egg-info",
-    "docs/*",
-    "notebooks",
-    "bin/hpc",
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".git-rewrite",
-    ".hg",
-    ".mypy_cache",
-    ".nox",
-    ".pants.d",
-    ".pytype",
-    ".ruff_cache",
-    ".svn",
-    ".tox",
-    ".venv",
-    "__pypackages__",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "node_modules",
-    "venv",
-    ".venv",
-    ".venv39",
-    ".venv310",
-    ".venv311",
-    ".venv312",
-]
+extend-exclude = ["*venv*", "notebooks", "sphinx"]
 line-length = 120
 target-version = "py310"
+
+[tool.ruff.lint.per-file-ignores]
+"docs/**/plot_*.py" = [
+  "B018",  # keep "useless expressions" for notebook display
+  "E402",  # non-top level imports for notebooks
+]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 20
